@@ -1,0 +1,4 @@
+*.exe
+*.syso
+_tmp/
+.env
