@@ -1,0 +1,34 @@
+name: Build Windows exe
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Install rsrc (manifest embedding)
+        run: go install github.com/akavel/rsrc@latest
+
+      - name: Embed manifest
+        run: rsrc -manifest md2pdf.manifest -o rsrc_windows_amd64.syso
+
+      - name: Build
+        run: go build -ldflags "-H windowsgui -s -w" -o md2pdf.exe .
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: md2pdf.exe
+          generate_release_notes: true
