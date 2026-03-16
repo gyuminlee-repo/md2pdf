@@ -24,8 +24,13 @@ jobs:
       - name: Embed manifest
         run: rsrc -manifest md2pdf.manifest -o rsrc_windows_amd64.syso
 
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+        shell: bash
+
       - name: Build
-        run: go build -ldflags "-H windowsgui -s -w" -o md2pdf.exe .
+        run: go build -ldflags "-H windowsgui -s -w -X main.version=${{ steps.version.outputs.VERSION }}" -o md2pdf.exe .
 
       - name: Create Release
         uses: softprops/action-gh-release@v2

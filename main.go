@@ -1,6 +1,6 @@
 package main
 
-const version = "1.0.0"
+var version = "dev"
 
 func main() {
 	runGUI()
