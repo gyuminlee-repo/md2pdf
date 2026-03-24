@@ -8,6 +8,7 @@ Markdown 파일을 PDF로 변환하는 Windows 독립 실행 프로그램.
 ### 드래그앤드롭
 `.md` 파일을 `md2pdf.exe`에 끌어다 놓으면 같은 폴더에 `.pdf` 생성.
 여러 파일을 한번에 드래그하면 일괄 변환.
+GUI 창에 파일을 드래그앤드롭하면 원본 파일의 실제 경로를 인식하여 같은 폴더에 PDF를 생성한다 (OLE IDropTarget COM 구현).
 
 ### CLI
 ```
@@ -22,6 +23,7 @@ md2pdf.exe file1.md file2.md         # 일괄 변환
 ## 기술 스택
 
 - Go 1.23 + goldmark (CommonMark 파서) + goldmark-pdf (PDF 렌더러)
+- WebView2 GUI + OLE IDropTarget COM (네이티브 드래그앤드롭, 실제 파일 경로 획득)
 - Malgun Gothic (Windows 기본 한글 폰트) 자동 탐색
 - chroma 기반 코드 구문 강조 (github 테마)
 - GFM 확장: 테이블, 취소선, 자동 링크, 체크리스트
@@ -30,7 +32,7 @@ md2pdf.exe file1.md file2.md         # 일괄 변환
 
 ```bash
 export PATH=~/go-sdk/go/bin:$PATH
-GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o md2pdf.exe .
+GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H windowsgui" -o md2pdf.exe .
 ```
 
 또는 `./build.sh` 실행.
@@ -47,10 +49,9 @@ GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o md2pdf.exe .
 ## 파일 구조
 
 ```
-main.go         진입점 (CLI/GUI 분기, 다중 파일 처리)
-converter.go    goldmark → PDF 변환 파이프라인
-font.go         Windows/WSL 시스템 폰트 탐색 및 등록
-gui.go          인터랙티브 모드
-build.sh        WSL 크로스컴파일 스크립트
-test/sample.md  테스트용 한글 마크다운
+main.go            진입점
+converter.go       goldmark → PDF 변환 파이프라인
+font.go            Windows/WSL 시스템 폰트 탐색 및 등록
+gui_windows.go     WebView2 GUI + OLE IDropTarget COM 드래그앤드롭
+test/sample.md     테스트용 한글 마크다운
 ```
