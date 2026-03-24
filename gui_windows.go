@@ -24,10 +24,18 @@ var (
 	shell32              = syscall.NewLazyDLL("shell32.dll")
 	pSHBrowseForFolder   = shell32.NewProc("SHBrowseForFolderW")
 	pSHGetPathFromIDList = shell32.NewProc("SHGetPathFromIDListW")
+	pDragQueryFileW      = shell32.NewProc("DragQueryFileW")
 
-	ole32           = syscall.NewLazyDLL("ole32.dll")
-	pCoInitializeEx = ole32.NewProc("CoInitializeEx")
-	pCoTaskMemFree  = ole32.NewProc("CoTaskMemFree")
+	ole32               = syscall.NewLazyDLL("ole32.dll")
+	pCoInitializeEx     = ole32.NewProc("CoInitializeEx")
+	pCoTaskMemFree      = ole32.NewProc("CoTaskMemFree")
+	pOleInitialize      = ole32.NewProc("OleInitialize")
+	pRegisterDragDrop   = ole32.NewProc("RegisterDragDrop")
+	pRevokeDragDrop     = ole32.NewProc("RevokeDragDrop")
+	pReleaseStgMedium   = ole32.NewProc("ReleaseStgMedium")
+
+	user32Lib         = syscall.NewLazyDLL("user32.dll")
+	pEnumChildWindows = user32Lib.NewProc("EnumChildWindows")
 )
 
 // ── Win32 types for file dialog ──────────────────────────────
@@ -83,14 +91,222 @@ const (
 	coinitApartmentthreaded = 0x2
 )
 
+// ── OLE IDropTarget COM types ─────────────────────────────────
+
+const (
+	cfHDROP         = 15
+	dvaspectContent = 1
+	tymedHGlobal    = 1
+	dropEffectCopy  = 1
+	sOK             = 0
+)
+
+// FORMATETC matches the C layout on AMD64.
+type formatETC struct {
+	cfFormat uint16
+	ptd      uintptr
+	dwAspect uint32
+	lindex   int32
+	tymed    uint32
+}
+
+// STGMEDIUM matches the C layout on AMD64.
+type stgMedium struct {
+	tymed          uint32
+	unionMember    uintptr // hGlobal for TYMED_HGLOBAL
+	pUnkForRelease uintptr
+}
+
+// iDropTargetVtbl is the COM vtable for IDropTarget.
+type iDropTargetVtbl struct {
+	QueryInterface uintptr
+	AddRef         uintptr
+	Release        uintptr
+	DragEnter      uintptr
+	DragOver       uintptr
+	DragLeave      uintptr
+	Drop           uintptr
+}
+
+// myDropTarget implements IDropTarget. The first field must be the vtable pointer.
+type myDropTarget struct {
+	lpVtbl uintptr
+	ref    int32
+}
+
+var (
+	dtVtbl    iDropTargetVtbl
+	dtVtblPtr uintptr // set once in initDropTarget
+)
+
+func initDropTarget() *myDropTarget {
+	dtVtbl = iDropTargetVtbl{
+		QueryInterface: syscall.NewCallback(dtQueryInterface),
+		AddRef:         syscall.NewCallback(dtAddRef),
+		Release:        syscall.NewCallback(dtRelease),
+		DragEnter:      syscall.NewCallback(dtDragEnter),
+		DragOver:       syscall.NewCallback(dtDragOver),
+		DragLeave:      syscall.NewCallback(dtDragLeave),
+		Drop:           syscall.NewCallback(dtDrop),
+	}
+	dtVtblPtr = uintptr(unsafe.Pointer(&dtVtbl))
+
+	dt := &myDropTarget{
+		lpVtbl: dtVtblPtr,
+		ref:    1,
+	}
+	return dt
+}
+
+func dtQueryInterface(this, riid, ppvObject uintptr) uintptr {
+	// Accept any interface query — we only implement IDropTarget.
+	*(*uintptr)(unsafe.Pointer(ppvObject)) = this
+	dtAddRef(this)
+	return sOK
+}
+
+func dtAddRef(this uintptr) uintptr {
+	dt := (*myDropTarget)(unsafe.Pointer(this))
+	dt.ref++
+	return uintptr(dt.ref)
+}
+
+func dtRelease(this uintptr) uintptr {
+	dt := (*myDropTarget)(unsafe.Pointer(this))
+	dt.ref--
+	return uintptr(dt.ref)
+}
+
+func dtDragEnter(this, pDataObj, grfKeyState, pt, pdwEffect uintptr) uintptr {
+	*(*uint32)(unsafe.Pointer(pdwEffect)) = dropEffectCopy
+	if globalWebView != nil {
+		globalWebView.Dispatch(func() {
+			globalWebView.Eval("document.getElementById('dropzone').classList.add('drag-over')")
+		})
+	}
+	return sOK
+}
+
+func dtDragOver(this, grfKeyState, pt, pdwEffect uintptr) uintptr {
+	*(*uint32)(unsafe.Pointer(pdwEffect)) = dropEffectCopy
+	return sOK
+}
+
+func dtDragLeave(this uintptr) uintptr {
+	if globalWebView != nil {
+		globalWebView.Dispatch(func() {
+			globalWebView.Eval("document.getElementById('dropzone').classList.remove('drag-over')")
+		})
+	}
+	return sOK
+}
+
+func dtDrop(this, pDataObj, grfKeyState, pt, pdwEffect uintptr) uintptr {
+	*(*uint32)(unsafe.Pointer(pdwEffect)) = dropEffectCopy
+
+	if globalWebView != nil {
+		globalWebView.Dispatch(func() {
+			globalWebView.Eval("document.getElementById('dropzone').classList.remove('drag-over')")
+		})
+	}
+
+	// Call IDataObject::GetData(CF_HDROP) to get file paths.
+	fmtetc := formatETC{
+		cfFormat: cfHDROP,
+		dwAspect: dvaspectContent,
+		lindex:   -1,
+		tymed:    tymedHGlobal,
+	}
+	var stgmed stgMedium
+
+	// IDataObject vtable: [0]QI [1]AddRef [2]Release [3]GetData ...
+	vtblPtr := *(*uintptr)(unsafe.Pointer(pDataObj))
+	getDataFn := *(*uintptr)(unsafe.Pointer(vtblPtr + 3*unsafe.Sizeof(uintptr(0))))
+
+	ret, _, _ := syscall.SyscallN(getDataFn, pDataObj,
+		uintptr(unsafe.Pointer(&fmtetc)),
+		uintptr(unsafe.Pointer(&stgmed)))
+
+	if ret != 0 {
+		return sOK
+	}
+
+	// Extract file paths from HDROP (= HGLOBAL containing DROPFILES struct)
+	hDrop := stgmed.unionMember
+	extractDroppedFiles(hDrop)
+
+	// Release the storage medium (do NOT call DragFinish — that's for WM_DROPFILES only)
+	pReleaseStgMedium.Call(uintptr(unsafe.Pointer(&stgmed)))
+
+	return sOK
+}
+
+// extractDroppedFiles reads file paths from an HDROP handle and adds them to the queue.
+func extractDroppedFiles(hDrop uintptr) {
+	count, _, _ := pDragQueryFileW.Call(hDrop, 0xFFFFFFFF, 0, 0)
+
+	added := 0
+	for i := uintptr(0); i < count; i++ {
+		nameLen, _, _ := pDragQueryFileW.Call(hDrop, i, 0, 0)
+		if nameLen == 0 {
+			continue
+		}
+
+		buf := make([]uint16, nameLen+1)
+		pDragQueryFileW.Call(hDrop, i, uintptr(unsafe.Pointer(&buf[0])), nameLen+1)
+		runtime.KeepAlive(buf)
+
+		path := syscall.UTF16ToString(buf)
+		if isMarkdownFile(path) {
+			if addToQueue(path) {
+				added++
+			}
+		}
+	}
+
+	if globalWebView != nil && added > 0 {
+		jsonBytes, err := json.Marshal(fileQueue)
+		if err != nil {
+			return
+		}
+		js := fmt.Sprintf(
+			"files = %s; renderFiles(); setStatus(files.length + '개 파일 준비됨');",
+			string(jsonBytes),
+		)
+		globalWebView.Dispatch(func() {
+			globalWebView.Eval(js)
+		})
+	}
+}
+
+// registerDropTargetOnChildren replaces WebView2's OLE drop targets with ours.
+func registerDropTargetOnChildren(parent uintptr, dt *myDropTarget) {
+	dtPtr := uintptr(unsafe.Pointer(dt))
+
+	enumCb := syscall.NewCallback(func(child, lParam uintptr) uintptr {
+		// Revoke WebView2's built-in OLE drop target
+		pRevokeDragDrop.Call(child)
+		// Register our IDropTarget that extracts real file paths
+		pRegisterDragDrop.Call(child, dtPtr)
+		return 1 // continue
+	})
+	pEnumChildWindows.Call(parent, enumCb, 0)
+
+	// Also register on parent window itself
+	pRevokeDragDrop.Call(parent)
+	pRegisterDragDrop.Call(parent, dtPtr)
+}
+
 // ── Global state ─────────────────────────────────────────────
 
 var (
 	fileQueue     []string
-	fileQueueSet  map[string]bool // O(1) dedup lookup (lowercase keys)
-	lastBrowseDir string          // last directory used in file dialog
-	outputDir     string          // custom output directory; empty = save next to source
-	dropTempDir   string          // temp directory for drag-dropped files
+	fileQueueSet  map[string]bool
+	lastBrowseDir string
+	outputDir     string
+	dropTempDir   string // temp dir for JS drag-drop fallback
+
+	globalWebView webview2.WebView
 )
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -174,6 +390,10 @@ func browseFolderDialog(title string) string {
 func runGUI() {
 	runtime.LockOSThread()
 
+	// Initialize OLE (required for RegisterDragDrop). Must be called before
+	// WebView2 creation so it sets COM to STA mode.
+	pOleInitialize.Call(0)
+
 	w := webview2.NewWithOptions(webview2.WebViewOptions{
 		Debug:     false,
 		AutoFocus: true,
@@ -193,6 +413,7 @@ func runGUI() {
 	w.SetSize(1040, 1120, webview2.HintFixed)
 
 	fileQueueSet = make(map[string]bool)
+	globalWebView = w
 
 	// Bind Go functions to JS
 	w.Bind("_browseFiles", func() []string {
@@ -220,7 +441,8 @@ func runGUI() {
 		return fileQueue
 	})
 
-	// Drag-drop: JS reads file content via FileReader, Go saves to temp dir
+	// JS drag-drop fallback: if native IDropTarget fails, JS reads file
+	// content and Go saves it to a temp directory.
 	w.Bind("_addDroppedFile", func(name, content string) map[string]string {
 		if dropTempDir == "" {
 			dir, err := os.MkdirTemp("", "md2pdf-drop-*")
@@ -258,6 +480,16 @@ func runGUI() {
 		return outputDir
 	})
 
+	// Create our IDropTarget COM object
+	dt := initDropTarget()
+
+	// Bind a function that JS calls after the page loads, so we can
+	// replace WebView2's drop targets with ours (child windows exist by then).
+	w.Bind("_registerNativeDrop", func() {
+		hwnd := uintptr(w.Window())
+		registerDropTargetOnChildren(hwnd, dt)
+	})
+
 	// Pre-load CLI args (drag onto exe)
 	var initialFiles []string
 	if len(os.Args) > 1 {
@@ -277,6 +509,9 @@ func runGUI() {
 			w.Init(fmt.Sprintf("window._initialFiles = %s;", string(jsonBytes)))
 		}
 	}
+
+	// Delay native drop registration until WebView2 child windows are created
+	w.Init("setTimeout(function(){ try { _registerNativeDrop(); } catch(e) {} }, 800);")
 
 	// Set HTML UI
 	w.SetHtml(buildHTML())
@@ -324,7 +559,6 @@ func handleBrowse() []string {
 		}
 	}
 
-	// Track last browse directory
 	if len(paths) > 0 {
 		lastBrowseDir = filepath.Dir(paths[0])
 	}
@@ -728,7 +962,8 @@ func buildHTML() string {
     }
   })();
 
-  // Drag-drop: read file content in JS, send to Go
+  // Drag-drop: Native IDropTarget (Go side) is primary — gets real file paths.
+  // JS handler below is a fallback if native registration failed.
   document.addEventListener('dragover', (e) => {
     e.preventDefault();
     $dropzone.classList.add('drag-over');
@@ -742,6 +977,18 @@ func buildHTML() string {
     e.preventDefault();
     $dropzone.classList.remove('drag-over');
 
+    // Wait briefly for native IDropTarget handler (if active, it adds files directly)
+    const queueBefore = files.length;
+    await new Promise(r => setTimeout(r, 300));
+    const freshQueue = await _getFileQueue();
+    if (freshQueue.length > queueBefore) {
+      files = freshQueue;
+      renderFiles();
+      setStatus(files.length + '개 파일 준비됨');
+      return;
+    }
+
+    // Fallback: read via JS and save to temp dir
     let added = 0, dupes = 0, errors = [];
     for (const file of e.dataTransfer.files) {
       if (/\.(md|markdown|txt)$/i.test(file.name)) {
