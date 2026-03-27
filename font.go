@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -8,6 +9,12 @@ import (
 
 	pdf "github.com/stephenafamo/goldmark-pdf"
 )
+
+//go:embed _fonts/Pretendard-Regular.ttf
+var pretendardRegular []byte
+
+//go:embed _fonts/Pretendard-Bold.ttf
+var pretendardBold []byte
 
 // fontSearchPaths returns candidate directories for font files.
 func fontSearchPaths() []string {
@@ -63,18 +70,24 @@ type FontSet struct {
 func registerFonts(pdfObj pdf.PDF) (textFont, codeFont pdf.Font, err error) {
 	textFont, codeFont = pdf.FontHelvetica, pdf.FontCourier // defaults
 
-	// Try Malgun Gothic for text (Korean support)
-	malgunSet, malgunErr := loadFontSet("MalgunGothic", "malgun.ttf", "malgunbd.ttf", "", "")
-	if malgunErr == nil {
-		malgunSet.Font.CanUseForText = true
-		if err := registerFontSet(pdfObj, malgunSet); err != nil {
-			return textFont, codeFont, fmt.Errorf("registering MalgunGothic: %w", err)
-		}
-		textFont = malgunSet.Font
+	// Text font: Pretendard (embedded, full Unicode: subscripts, superscripts, math, Korean)
+	pretendardSet := &FontSet{
+		Font: pdf.Font{
+			Family:        "Pretendard",
+			Type:          pdf.FontTypeCustom,
+			CanUseForText: true,
+		},
+		Regular:    pretendardRegular,
+		Bold:       pretendardBold,
+		Italic:     pretendardRegular,
+		BoldItalic: pretendardBold,
 	}
+	if err := registerFontSet(pdfObj, pretendardSet); err != nil {
+		return textFont, codeFont, fmt.Errorf("registering Pretendard: %w", err)
+	}
+	textFont = pretendardSet.Font
 
-	// For code blocks: use Malgun Gothic as well (Consolas lacks Korean glyphs).
-	// Register it under a separate family name so code styling is independent.
+	// Code font: Malgun Gothic (has box-drawing chars ├└ that Pretendard lacks)
 	codeSet, codeErr := loadFontSet("MalgunCode", "malgun.ttf", "malgunbd.ttf", "", "")
 	if codeErr == nil {
 		codeSet.Font.CanUseForCode = true
