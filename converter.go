@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/alecthomas/chroma/v2"
 	"github.com/alecthomas/chroma/v2/styles"
@@ -46,6 +47,7 @@ func ConvertFile(inputPath, outputPath string) error {
 // Convert takes markdown bytes and returns PDF bytes.
 func Convert(mdBytes []byte, baseDir string) ([]byte, error) {
 	ctx := context.Background()
+	mdBytes = normalizePlainTextArrows(mdBytes)
 
 	// Create PDF with footer (page number)
 	fpdfObj := gpdf.NewFpdf(ctx, gpdf.FpdfConfig{
@@ -93,6 +95,33 @@ func Convert(mdBytes []byte, baseDir string) ([]byte, error) {
 	}
 
 	return buf.Bytes(), nil
+}
+
+// normalizePlainTextArrows replaces ASCII flow arrows with a Unicode arrow in
+// prose, while leaving fenced code blocks unchanged. goldmark-pdf currently
+// emits `>` as `&gt;` in rendered PDF text for plain prose, so normalizing here
+// preserves the intended visual flow.
+func normalizePlainTextArrows(mdBytes []byte) []byte {
+	lines := strings.Split(string(mdBytes), "\n")
+	inFence := false
+
+	for i, line := range lines {
+		trimmed := strings.TrimLeft(line, " \t")
+		if strings.HasPrefix(trimmed, "```") || strings.HasPrefix(trimmed, "~~~") {
+			inFence = !inFence
+			continue
+		}
+		if inFence {
+			continue
+		}
+
+		// Replace the longer token first so `-->` does not become `-→`.
+		line = strings.ReplaceAll(line, "-->", "→")
+		line = strings.ReplaceAll(line, "->", "→")
+		lines[i] = line
+	}
+
+	return []byte(strings.Join(lines, "\n"))
 }
 
 // pdfStyles returns a Blue Topaz (light mode) themed style set.
