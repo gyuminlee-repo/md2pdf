@@ -1,0 +1,3 @@
+timestamp	tool	detail
+09:50:01	Bash	cd /mnt/d/_workspace/030.repos/md2pdf-tool && git add README.md converter.go && git commit -m "$(cat <<'EOF' v1.4: Pretendard 내장 폰트 + 유니코드 하첨자/화살표 변환 + README 반영  - 
+09:50:12	Bash	git -C /mnt/d/_workspace/030.repos/terminal-init-setting push 2>&1 | tail -3 & git -C /mnt/d/_workspace/030.repos/md2pdf-tool push 2>&1 | tail -3 & wait 

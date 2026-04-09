@@ -420,12 +420,16 @@ func runGUI() {
 		return handleBrowse()
 	})
 
-	w.Bind("_convertFiles", func(paths []string) map[string]interface{} {
-		return handleConvert(paths, w)
+	w.Bind("_convertFiles", func(paths []string, theme string) map[string]interface{} {
+		return handleConvert(paths, theme, w)
 	})
 
 	w.Bind("_getVersion", func() string {
 		return version
+	})
+
+	w.Bind("_getThemes", func() []ThemeEntry {
+		return ThemeList()
 	})
 
 	w.Bind("_removeFile", func(key string) []string {
@@ -572,7 +576,7 @@ func handleBrowse() []string {
 
 // ── Convert handler ──────────────────────────────────────────
 
-func handleConvert(paths []string, w webview2.WebView) map[string]interface{} {
+func handleConvert(paths []string, theme string, w webview2.WebView) map[string]interface{} {
 	if len(paths) == 0 {
 		return map[string]interface{}{
 			"ok":   0,
@@ -597,7 +601,7 @@ func handleConvert(paths []string, w webview2.WebView) map[string]interface{} {
 		if outputDir != "" {
 			out = filepath.Join(outputDir, filepath.Base(out))
 		}
-		if err := ConvertFile(in, out); err != nil {
+		if err := ConvertFile(in, out, theme); err != nil {
 			fail++
 		} else {
 			ok++
@@ -851,6 +855,38 @@ func buildHTML() string {
   .status.error { color: #ef4444; font-weight: 500; }
   .status.progress { color: #3b82f6; font-weight: 500; }
 
+  .theme-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-size: 19px;
+    color: #475569;
+  }
+  .theme-bar .theme-label {
+    flex-shrink: 0;
+    font-weight: 500;
+  }
+  .theme-bar select {
+    flex: 1;
+    padding: 4px 8px;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    font-size: 18px;
+    font-family: inherit;
+    background: #fff;
+    color: #1e293b;
+    cursor: pointer;
+  }
+  .theme-bar select:focus {
+    outline: none;
+    border-color: #3b82f6;
+  }
+
   .output-bar {
     display: flex;
     align-items: center;
@@ -919,6 +955,11 @@ func buildHTML() string {
   </div>
 </div>
 
+<div class="theme-bar">
+  <span class="theme-label">테마:</span>
+  <select id="themeSelect"></select>
+</div>
+
 <div class="output-bar" id="outputBar">
   <span class="output-label">출력 폴더:</span>
   <span class="output-path" id="outputPath">(원본 위치)</span>
@@ -956,6 +997,16 @@ func buildHTML() string {
   (async () => {
     const ver = await _getVersion();
     document.getElementById('versionBadge').textContent = 'v' + ver;
+
+    const themes = await _getThemes();
+    const sel = document.getElementById('themeSelect');
+    themes.forEach(t => {
+      const opt = document.createElement('option');
+      opt.value = t.Name;
+      opt.textContent = t.Name + ' — ' + t.Description;
+      sel.appendChild(opt);
+    });
+
     if (window._initialFiles && window._initialFiles.length > 0) {
       files = [...window._initialFiles];
       renderFiles();
@@ -1032,7 +1083,8 @@ func buildHTML() string {
     updateButtons();
     setStatus('변환 준비 중...', 'progress');
 
-    const result = await _convertFiles(files);
+    const theme = document.getElementById('themeSelect').value;
+    const result = await _convertFiles(files, theme);
     converting = false;
 
     if (result.fail > 0) {

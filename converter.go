@@ -21,7 +21,7 @@ import (
 )
 
 // ConvertFile reads a markdown file and writes a PDF to the output path.
-func ConvertFile(inputPath, outputPath string) error {
+func ConvertFile(inputPath, outputPath, theme string) error {
 	mdBytes, err := os.ReadFile(inputPath)
 	if err != nil {
 		return fmt.Errorf("reading input: %w", err)
@@ -32,7 +32,7 @@ func ConvertFile(inputPath, outputPath string) error {
 		return fmt.Errorf("resolving base dir: %w", err)
 	}
 
-	pdfBytes, err := Convert(mdBytes, baseDir)
+	pdfBytes, err := Convert(mdBytes, baseDir, theme)
 	if err != nil {
 		return err
 	}
@@ -45,7 +45,7 @@ func ConvertFile(inputPath, outputPath string) error {
 }
 
 // Convert takes markdown bytes and returns PDF bytes.
-func Convert(mdBytes []byte, baseDir string) ([]byte, error) {
+func Convert(mdBytes []byte, baseDir, theme string) ([]byte, error) {
 	ctx := context.Background()
 	mdBytes = normalizePlainTextArrows(mdBytes)
 
@@ -71,7 +71,7 @@ func Convert(mdBytes []byte, baseDir string) ([]byte, error) {
 	}
 
 	// Build styles
-	st := pdfStyles(textFont, codeFont)
+	st := pdfStyles(textFont, codeFont, theme)
 
 	// Configure renderer
 	renderer := gpdf.New(
@@ -124,43 +124,32 @@ func normalizePlainTextArrows(mdBytes []byte) []byte {
 	return []byte(strings.Join(lines, "\n"))
 }
 
-// pdfStyles returns a Blue Topaz (light mode) themed style set.
-func pdfStyles(text, code gpdf.Font) gpdf.Styles {
+// pdfStyles returns a themed style set based on the given theme name.
+func pdfStyles(text, code gpdf.Font, theme string) gpdf.Styles {
 	white := color.RGBA{255, 255, 255, 0}
 
-	// Blue Topaz heading colors (light mode, navy-to-sky gradient)
-	h1Color := color.RGBA{R: 7, G: 42, B: 110, A: 255}    // hsl(216,88%,26%)  진한 네이비
-	h2Color := color.RGBA{R: 0, G: 71, B: 169, A: 255}    // hsl(212,100%,33%) 딥 블루
-	h3Color := color.RGBA{R: 14, G: 94, B: 177, A: 255}   // hsl(210,86%,39%)  미디엄 블루
-	h4Color := color.RGBA{R: 53, G: 128, B: 185, A: 255}  // hsl(208,58%,49%)  스카이 블루
-	h5Color := color.RGBA{R: 93, G: 160, B: 214, A: 255}  // hsl(209,70%,62%)  밝은 블루
-	h6Color := color.RGBA{R: 137, G: 187, B: 223, A: 255} // hsl(209,65%,72%)  연한 블루
-
-	textNormal := color.RGBA{R: 14, G: 14, B: 14, A: 255}    // #0e0e0e
-	textMuted := color.RGBA{R: 127, G: 127, B: 127, A: 255}  // #7f7f7f
-	linkBlue := color.RGBA{R: 70, G: 142, B: 235, A: 255}    // #468EEB
-
-	// Table: Blue Topaz 스타일
-	tableHeaderBg := color.RGBA{R: 232, G: 240, B: 251, A: 255} // accent 10% tint
-	tableRowBg := color.RGBA{R: 244, G: 244, B: 244, A: 255}    // #f4f4f4
+	tc, ok := Themes[theme]
+	if !ok {
+		tc = Themes[DefaultTheme]
+	}
 
 	return gpdf.Styles{
-		H1: &gpdf.Style{Font: text, Size: 18, Spacing: 6, TextColor: h1Color, FillColor: white},
-		H2: &gpdf.Style{Font: text, Size: 14, Spacing: 5, TextColor: h2Color, FillColor: white},
-		H3: &gpdf.Style{Font: text, Size: 12, Spacing: 4, TextColor: h3Color, FillColor: white},
-		H4: &gpdf.Style{Font: text, Size: 11, Spacing: 3, TextColor: h4Color, FillColor: white},
-		H5: &gpdf.Style{Font: text, Size: 10, Spacing: 3, TextColor: h5Color, FillColor: white},
-		H6: &gpdf.Style{Font: text, Size: 10, Spacing: 3, TextColor: h6Color, FillColor: white},
+		H1: &gpdf.Style{Font: text, Size: 18, Spacing: 6, TextColor: tc.H1, FillColor: white},
+		H2: &gpdf.Style{Font: text, Size: 14, Spacing: 5, TextColor: tc.H2, FillColor: white},
+		H3: &gpdf.Style{Font: text, Size: 12, Spacing: 4, TextColor: tc.H3, FillColor: white},
+		H4: &gpdf.Style{Font: text, Size: 11, Spacing: 3, TextColor: tc.H4, FillColor: white},
+		H5: &gpdf.Style{Font: text, Size: 10, Spacing: 3, TextColor: tc.H5, FillColor: white},
+		H6: &gpdf.Style{Font: text, Size: 10, Spacing: 3, TextColor: tc.H6, FillColor: white},
 
-		Normal:     &gpdf.Style{Font: text, Size: 10, Spacing: 2, TextColor: textNormal, FillColor: white},
-		Blockquote: &gpdf.Style{Font: text, Size: 10, Spacing: 1.5, TextColor: textMuted, FillColor: white},
+		Normal:     &gpdf.Style{Font: text, Size: 10, Spacing: 2, TextColor: tc.TextNormal, FillColor: white},
+		Blockquote: &gpdf.Style{Font: text, Size: 10, Spacing: 1.5, TextColor: tc.TextMuted, FillColor: white},
 
-		THeader: &gpdf.Style{Font: text, Size: 9, Spacing: 2, TextColor: textNormal, FillColor: tableHeaderBg},
-		TBody:   &gpdf.Style{Font: text, Size: 9, Spacing: 2, TextColor: textNormal, FillColor: tableRowBg},
+		THeader: &gpdf.Style{Font: text, Size: 9, Spacing: 2, TextColor: tc.TextNormal, FillColor: tc.TableHeaderBg},
+		TBody:   &gpdf.Style{Font: text, Size: 9, Spacing: 2, TextColor: tc.TextNormal, FillColor: tc.TableRowBg},
 
 		CodeFont:       code,
-		CodeBlockTheme: codeHighlightTheme(),
-		LinkColor:      linkBlue,
+		CodeBlockTheme: codeHighlightTheme(tc.CodeBg, tc.CodeText),
+		LinkColor:      tc.LinkColor,
 	}
 }
 
@@ -180,14 +169,15 @@ func pageFooter(impl gpdf.Fpdf, _ fonts.Cache) func() {
 // codeHighlightTheme returns a GitHub-based chroma style with explicit
 // Background/Text fallback to work around a goldmark-pdf bug where
 // unset chroma colors render as white (invisible on white background).
-func codeHighlightTheme() *chroma.Style {
+func codeHighlightTheme(bgHex, textHex string) *chroma.Style {
 	base := styles.Get("github")
 	if base == nil {
 		base = styles.Fallback
 	}
+	entry := textHex + " bg:" + bgHex
 	s, err := base.Builder().
-		Add(chroma.Background, "#333333 bg:#ebebeb").
-		Add(chroma.Text, "#333333 bg:#ebebeb").
+		Add(chroma.Background, entry).
+		Add(chroma.Text, entry).
 		Build()
 	if err != nil {
 		return base
