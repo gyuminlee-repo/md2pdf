@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/alecthomas/chroma/v2"
@@ -47,6 +48,8 @@ func ConvertFile(inputPath, outputPath, theme string) error {
 // Convert takes markdown bytes and returns PDF bytes.
 func Convert(mdBytes []byte, baseDir, theme string) ([]byte, error) {
 	ctx := context.Background()
+	mdBytes = stripFrontmatter(mdBytes)
+	mdBytes = simplifyWikilinks(mdBytes)
 	mdBytes = normalizePlainTextArrows(mdBytes)
 
 	// Create PDF with footer (page number)
@@ -95,6 +98,59 @@ func Convert(mdBytes []byte, baseDir, theme string) ([]byte, error) {
 	}
 
 	return buf.Bytes(), nil
+}
+
+// stripFrontmatter removes a leading YAML frontmatter block delimited by
+// `---` lines. goldmark is not configured with a frontmatter parser, so the
+// raw YAML would otherwise render as body text (with `"` escaped to `&quot;`
+// due to a goldmark-pdf escaping bug).
+func stripFrontmatter(mdBytes []byte) []byte {
+	s := string(mdBytes)
+	if !strings.HasPrefix(s, "---\n") && !strings.HasPrefix(s, "---\r\n") {
+		return mdBytes
+	}
+	lines := strings.Split(s, "\n")
+	for i := 1; i < len(lines); i++ {
+		if strings.TrimRight(lines[i], "\r") == "---" {
+			return []byte(strings.Join(lines[i+1:], "\n"))
+		}
+	}
+	return mdBytes
+}
+
+var wikilinkRe = regexp.MustCompile(`\[\[([^\[\]]+)\]\]`)
+
+// simplifyWikilinks rewrites Obsidian-style `[[path/to/note]]` or
+// `[[path|alias]]` references into plain readable text. CommonMark/GFM does
+// not understand wikilinks, so without rewriting the raw brackets appear in
+// the PDF. Fenced code blocks are left untouched.
+func simplifyWikilinks(mdBytes []byte) []byte {
+	lines := strings.Split(string(mdBytes), "\n")
+	inFence := false
+
+	for i, line := range lines {
+		trimmed := strings.TrimLeft(line, " \t")
+		if strings.HasPrefix(trimmed, "```") || strings.HasPrefix(trimmed, "~~~") {
+			inFence = !inFence
+			continue
+		}
+		if inFence {
+			continue
+		}
+
+		lines[i] = wikilinkRe.ReplaceAllStringFunc(line, func(match string) string {
+			inner := match[2 : len(match)-2]
+			if pipe := strings.Index(inner, "|"); pipe >= 0 {
+				return strings.TrimSpace(inner[pipe+1:])
+			}
+			if slash := strings.LastIndex(inner, "/"); slash >= 0 {
+				return inner[slash+1:]
+			}
+			return inner
+		})
+	}
+
+	return []byte(strings.Join(lines, "\n"))
 }
 
 // normalizePlainTextArrows replaces ASCII flow arrows with a Unicode arrow in
