@@ -1,0 +1,209 @@
+timestamp	tool	detail
+15:15:07	Bash	ls /mnt/d/_workspace/cc/md2pdf-tool/ 
+15:15:12	Grep	quot|html.Escape|EscapeString|&amp;|&#34; 
+15:15:15	Read	/mnt/d/_workspace/cc/md2pdf-tool/converter.go 
+15:25:15	Bash	ls /mnt/d/_workspace/cc/md2pdf-tool/_tmp/ 2>/dev/null; find / -path /proc -prune -o -name "*.go" -print 2>/dev/null | xargs grep -l "goldmark-pdf" 2>/dev/null | head -5 
+15:25:23	Bash	ls ~/go/pkg/mod/github.com/stephenafamo/ 2>/dev/null; ls ~/go/pkg/mod/github.com/ 2>/dev/null | head 
+15:25:28	Bash	grep -rn "quot\|EscapeString\|html.Escape\|&amp" ~/go/pkg/mod/github.com/stephenafamo/goldmark-pdf@v0.4.2/ 2>/dev/null | head -30 
+15:25:33	Grep	Write|Segments|util.EscapeHTML|html\. 
+15:25:36	Grep	WriteText|EscapeHTML 
+15:25:42	Read	/home/gml/go/pkg/mod/github.com/stephenafamo/goldmark-pdf@v0.4.2/renderer.go 
+15:25:50	Edit	/mnt/d/_workspace/cc/md2pdf-tool/converter.go 
+15:25:56	Bash	go build -o md2pdf_test . 2>&1 | head -20 
+15:25:59	Bash	which go; ls /usr/local/go/bin/ 2>/dev/null; ls ~/go/bin/ 2>/dev/null; command -v go || find /usr/lib/go* -name go -type f 2>/dev/null | head -3 
+15:26:04	Bash	ls /usr/lib/go*/bin/go /opt/go/bin/go /snap/go/current/bin/go 2>/dev/null; apt list --installed 2>/dev/null | grep -i golang | head -3 
+15:31:12	Bash	ls /mnt/c/Program\ Files/Go/bin/ 2>/dev/null; ls /mnt/c/Go/bin/ 2>/dev/null; find /mnt/c -maxdepth 4 -name "go.exe" 2>/dev/null | head -3 
+15:31:15	Bash	cmd.exe /c "where go" 2>&1 | head -5 
+15:31:25	Bash	ls /usr/local/go 2>/dev/null && echo "EXISTS" || echo "MISSING" 
+15:31:58	Bash	ls $HOME/go-sdk 2>/dev/null; ls $HOME/go/bin 2>/dev/null; ls $HOME/*.tar.gz 2>/dev/null 
+15:32:15	Bash	$HOME/go/bin/go version 
+15:32:21	Bash	$HOME/go/bin/go build -o md2pdf_linux . 2>&1 | tail -20 
+15:32:27	Bash	ls -la /mnt/d/_workspace/cc/md2pdf-tool/md2pdf_linux 2>&1 | head -3 
+15:32:33	Write	/tmp/quote_test.md 
+15:32:38	Bash	./md2pdf_linux /tmp/quote_test.md /tmp/quote_test.pdf 2>&1; ls -la /tmp/quote_test.pdf 
+15:32:43	Bash	pdftotext /tmp/quote_test.pdf - 2>/dev/null | head -30 
+15:32:55	Bash	sudo -n apt-get install -y poppler-utils 2>&1 | tail -3 || pip install --quiet pypdf 2>&1 | tail -3 
+15:33:11	Bash	pip install --quiet --user --break-system-packages pypdf 2>&1 | tail -3 && python3 -c "from pypdf import PdfReader; r=PdfReader('/tmp/quote_test.pdf'); print(r.pages[0].extract_text())" 
+15:33:40	Bash	./md2pdf_linux --help 2>&1 | head -20; ./md2pdf_linux /tmp/quote_test.md 2>&1 
+15:33:48	Grep	func main|os.Args|output 
+15:33:51	Read	/mnt/d/_workspace/cc/md2pdf-tool/main.go 
+15:33:56	Read	/mnt/d/_workspace/cc/md2pdf-tool/gui_other.go 
+15:34:01	Bash	cp /tmp/quote_test.md /tmp/before.md && cp /tmp/quote_test.md /tmp/after.md && ./md2pdf_before /tmp/before.md && ./md2pdf_linux /tmp/after.md && ls -la /tmp/before.pdf /tmp/after.pdf && md5sum /tmp/be 
+15:37:13	Bash	rm /mnt/d/_workspace/cc/md2pdf-tool/md2pdf_linux /mnt/d/_workspace/cc/md2pdf-tool/md2pdf_before /tmp/before.pdf /tmp/after.pdf /tmp/before.md /tmp/after.md /tmp/quote_test.md /tmp/quote_test.pdf /tmp/ 
+15:37:37	Bash	GOOS=windows GOARCH=amd64 $HOME/go/bin/go build -ldflags "-H windowsgui" -o md2pdf.exe . 2>&1 | tail -20 
+15:37:40	Bash	ls -la /mnt/d/_workspace/cc/md2pdf-tool/md2pdf.exe 
+15:41:52	Bash	ls "/mnt/d/_workspace/obsidian/020.Wiki_Knowledge/040.Research_Tips/" | grep -i "우측Alt\|RAlt" 
+15:41:57	Bash	grep -n "RAlt\|SingleInstance\|Requires" "/mnt/d/_workspace/obsidian/020.Wiki_Knowledge/040.Research_Tips/우측Alt_런처_윈도우_맥_생산성.md" | head -20 
+15:42:00	Read	/mnt/d/_workspace/obsidian/020.Wiki_Knowledge/040.Research_Tips/우측Alt_런처_윈도우_맥_생산성.md 
+15:42:16	Bash	$HOME/go/bin/go build -o md2pdf_linux . && ./md2pdf_linux "/mnt/d/_workspace/obsidian/020.Wiki_Knowledge/040.Research_Tips/우측Alt_런처_윈도우_맥_생산성.md" 2>&1 | tail -3 
+15:42:24	Bash	cp "/mnt/d/_workspace/obsidian/020.Wiki_Knowledge/040.Research_Tips/우측Alt_런처_윈도우_맥_생산성.md" /tmp/test_ahk.md && ./md2pdf_linux /tmp/test_ahk.md && pip install --user --break-syste 
+15:42:35	Read	/home/gml/go/pkg/mod/github.com/stephenafamo/goldmark-pdf@v0.4.2/renderer_funcs.go 
+15:42:44	Bash	python3 -c " from pdfminer.high_level import extract_pages from pdfminer.layout import LTTextContainer, LTChar for i, page in enumerate(extract_pages('/tmp/test_ahk.pdf')):     for element in page:    
+15:42:50	Bash	python3 << 'EOF' import zlib, re with open('/tmp/test_ahk.pdf','rb') as f:     data = f.read() # find all FlateDecode streams streams = re.findall(rb'stream\r?\n(.*?)\r?\nendstream', data, re.DOTALL) 
+15:43:12	Bash	find ~/go/pkg/mod/github.com/alecthomas/chroma* -name "github.go" 2>/dev/null | head -3 
+15:43:16	Bash	find ~/go/pkg/mod/github.com/alecthomas -type d 2>/dev/null | head; find ~/go/pkg/mod -name "github.go" -path "*styles*" 2>/dev/null 
+15:43:21	Bash	find ~/go/pkg/mod/github.com/alecthomas/chroma/v2@v2.19.0 -name "*.go" | xargs grep -l "github" 2>/dev/null | head; find ~/go/pkg/mod/github.com/alecthomas/chroma/v2@v2.19.0 -name "*.xml" -path "*gith 
+15:43:26	Bash	grep -E "#cf222e|#CF222E|#82071e|#82071E|cf222e|82071e" ~/go/pkg/mod/github.com/alecthomas/chroma/v2@v2.19.0/styles/github.xml -i 
+15:43:40	Edit	/mnt/d/_workspace/cc/md2pdf-tool/converter.go 
+15:43:49	Bash	$HOME/go/bin/go build -o md2pdf_linux . && ./md2pdf_linux /tmp/test_ahk.md && python3 << 'EOF' import zlib, re with open('/tmp/test_ahk.pdf','rb') as f:     data = f.read() streams = re.findall(rb'str 
+15:43:57	Bash	GOOS=windows GOARCH=amd64 $HOME/go/bin/go build -ldflags "-H windowsgui" -o md2pdf.exe . && ls -la md2pdf.exe md2pdf_linux && rm md2pdf_linux /tmp/test_ahk.md /tmp/test_ahk.pdf 
+15:46:58	Read	/mnt/d/_workspace/cc/md2pdf-tool/font.go 
+15:47:06	Bash	grep -n "⌘\|init.lua" "/mnt/d/_workspace/obsidian/020.Wiki_Knowledge/040.Research_Tips/우측Alt_런처_윈도우_맥_생산성.md" | head -10 
+15:47:12	Bash	python3 << 'EOF' from fontTools.ttLib import TTFont try:     font = TTFont('/mnt/d/_workspace/cc/md2pdf-tool/_fonts/Pretendard-Regular.ttf')     cmap = font.getBestCmap()     for cp in [0x2318, 0x2325 
+15:47:22	Bash	python3 << 'EOF' from fontTools.ttLib import TTFont for path in ['/mnt/c/Windows/Fonts/malgun.ttf', '/mnt/c/Windows/Fonts/malgunbd.ttf']:     try:         font = TTFont(path)         cmap = font.getBe 
+15:47:39	Bash	python3 << 'EOF' from fontTools.ttLib import TTFont import os fonts_to_check = ['consola.ttf', 'consolab.ttf', 'cour.ttf', 'CascadiaCode.ttf', 'CascadiaMono.ttf', 'D2Coding.ttf', 'NanumGothicCoding.tt 
+15:47:46	Bash	python3 << 'EOF' from fontTools.ttLib import TTFont from fontTools.ttLib.ttCollection import TTCollection p = '/mnt/c/Windows/Fonts/D2Coding-Ver1.3.2-20180524-all.ttc' coll = TTCollection(p) for i, ft 
+15:47:56	Bash	ls -la /mnt/d/_workspace/cc/md2pdf-tool/_fonts/ 
+15:48:06	Bash	python3 << 'EOF' from fontTools.ttLib.ttCollection import TTCollection coll = TTCollection('/mnt/c/Windows/Fonts/D2Coding-Ver1.3.2-20180524-all.ttc') coll.fonts[0].save('/mnt/d/_workspace/cc/md2pdf-to 
+15:48:14	Edit	/mnt/d/_workspace/cc/md2pdf-tool/font.go 
+15:48:24	Edit	/mnt/d/_workspace/cc/md2pdf-tool/font.go 
+15:48:30	Bash	$HOME/go/bin/go build -o md2pdf_linux . 2>&1 | tail -10 
+15:48:36	Bash	cp "/mnt/d/_workspace/obsidian/020.Wiki_Knowledge/040.Research_Tips/우측Alt_런처_윈도우_맥_생산성.md" /tmp/test.md && ./md2pdf_linux /tmp/test.md && ls -la /tmp/test.pdf 
+15:48:42	Bash	python3 << 'EOF' import re with open('/tmp/test.pdf','rb') as f:     data = f.read() fonts = set(re.findall(rb'/BaseFont\s+/(\S+)', data)) print("Fonts used:", fonts) EOF 
+15:48:52	Bash	GOOS=windows GOARCH=amd64 $HOME/go/bin/go build -ldflags "-H windowsgui" -o md2pdf.exe . && ls -la md2pdf.exe && rm md2pdf_linux /tmp/test.md /tmp/test.pdf 
+15:49:35	Bash	python3 << 'EOF' from fontTools.ttLib import TTFont font = TTFont('/mnt/d/_workspace/cc/md2pdf-tool/_fonts/Pretendard-Regular.ttf') cmap = font.getBestCmap() for cp in [0x2705, 0x274C, 0x2713, 0x2714, 
+15:49:54	Bash	python3 << 'EOF' from fontTools.ttLib import TTFont import os for f in ['seguisym.ttf', 'seguiemj.ttf', 'segoeuisym.ttf']:     p = f'/mnt/c/Windows/Fonts/{f}'     if not os.path.exists(p): continue    
+15:50:11	Bash	python3 << 'EOF' from fontTools.ttLib import TTFont f = TTFont('/mnt/d/_workspace/cc/md2pdf-tool/_fonts/Pretendard-Regular.ttf') c = f.getBestCmap() for cp in [0x2713, 0x2717, 0x2716, 0x2715, 0x203B,  
+15:50:19	Bash	ls /mnt/c/Windows/Fonts/ | grep -iE "noto|emoji|symbola|twemoji" | head 
+15:50:37	Bash	curl -sLI "https://github.com/googlefonts/noto-emoji/raw/main/fonts/NotoEmoji-Regular.ttf" | head -5; head -c 200 /tmp/NotoEmoji.ttf 
+15:50:46	Bash	curl -sL -o /tmp/NotoEmoji.ttf "https://fonts.gstatic.com/s/notoemoji/v58/bMrnmSyK7YY-MEu6aWjPDs-ar6uWaGWuob-r0jwvS-FGJCMY.ttf" && python3 -c " from fontTools.ttLib import TTFont f = TTFont('/tmp/Noto 
+15:51:00	Bash	python3 << 'PYEOF' from fontTools.merge import Merger import sys try:     m = Merger()     merged = m.merge(['/mnt/d/_workspace/cc/md2pdf-tool/_fonts/Pretendard-Regular.ttf', '/tmp/NotoEmoji.ttf'])    
+15:51:12	Bash	python3 -c " # Subset NotoEmoji to common codepoints, then use pyftmerge import subprocess codepoints = '2705,274C,2713,2714,2715,2716,2717,2B55,26A0,1F4A1,1F31F,1F4CD,1F4CC,1F449,1F44D,1F44E,1F680,1F 
+15:51:18	Bash	pyftmerge --help 2>&1 | head -5; pyftmerge /mnt/d/_workspace/cc/md2pdf-tool/_fonts/Pretendard-Regular.ttf /tmp/NotoEmoji-subset.ttf --output-file=/tmp/Pretendard-Plus.ttf 2>&1 | tail -15 
+15:52:00	Bash	python3 << 'PYEOF' from fontTools.ttLib import TTFont, getTableClass from fontTools.pens.ttGlyphPen import TTGlyphPen from fontTools.pens.transformPen import TransformPen from fontTools.misc.transform 
+15:52:18	Bash	python3 << 'PYEOF' # Restore from module cache and recreate merged font import shutil, subprocess # Keep a backup only if not exists import os if not os.path.exists('/tmp/Pretendard-Regular.backup.ttf 
+15:52:25	Bash	ls "/mnt/d/_workspace/obsidian/010.KRIBB/010.Projects/999.UNIST/010.PA1_revision_R1/" | grep -iE "gibson|\.md$" | head 
+15:52:31	Bash	grep -rln "Gibson\|✅\|💡\|🌟\|❌" "/mnt/d/_workspace/obsidian/010.KRIBB/010.Projects/999.UNIST/010.PA1_revision_R1/" | head -5 
+15:52:40	Bash	cp "/mnt/d/_workspace/obsidian/010.KRIBB/010.Projects/999.UNIST/010.PA1_revision_R1/송현_metY1_클로닝_20260413.md" /tmp/t.md && $HOME/go/bin/go build -o md2pdf_linux . && ./md2pdf_linux /tmp/t.md 
+15:52:49	Bash	python3 << 'PYEOF' from fontTools.ttLib import TTFont f = TTFont('/mnt/d/_workspace/cc/md2pdf-tool/_fonts/Pretendard-Regular.ttf') cmap = f.getBestCmap() hmtx = f['hmtx'] for cp in [0x2705, 0x274C, 0x 
+15:53:01	Bash	GOOS=windows GOARCH=amd64 $HOME/go/bin/go build -ldflags "-H windowsgui" -o md2pdf.exe . && ls -la md2pdf.exe && rm md2pdf_linux /tmp/t.md /tmp/t.pdf /tmp/NotoEmoji.ttf /tmp/NotoEmoji-subset.ttf /tmp/ 
+15:55:14	Bash	head -20 "/mnt/d/_workspace/obsidian/010.KRIBB/010.Projects/999.UNIST/010.PA1_revision_R1/송현_metY1_클로닝_20260413.md" | cat -A | head -15 
+15:56:48	Grep	renderHardLineBreak|HardLineBreak|KindHardLineBreak|renderRawHTML|SoftLineBreak 
+15:56:54	Bash	grep -n "Kind" /home/gml/go/pkg/mod/github.com/stephenafamo/goldmark-pdf@v0.4.2/renderer_funcs.go | head -30 
+15:56:59	Read	/home/gml/go/pkg/mod/github.com/stephenafamo/goldmark-pdf@v0.4.2/renderer_funcs.go 
+15:57:08	Read	/home/gml/go/pkg/mod/github.com/stephenafamo/goldmark-pdf@v0.4.2/writer.go 
+15:57:31	Edit	/mnt/d/_workspace/cc/md2pdf-tool/converter.go 
+15:57:42	Edit	/mnt/d/_workspace/cc/md2pdf-tool/converter.go 
+15:57:53	Bash	$HOME/go/bin/go build -o md2pdf_linux . && cp "/mnt/d/_workspace/obsidian/010.KRIBB/010.Projects/999.UNIST/010.PA1_revision_R1/송현_metY1_클로닝_20260413.md" /tmp/t.md && ./md2pdf_linux /tmp/t.md 
+15:58:02	Bash	python3 << 'PYEOF' # Extract text positions from first page to verify line breaks from pdfminer.high_level import extract_pages from pdfminer.layout import LTTextContainer for i, page in enumerate(ext 
+15:58:20	Bash	lsof md2pdf.exe 2>&1 | head; ls -la md2pdf.exe 
+15:58:27	Bash	mv md2pdf.exe md2pdf.exe.old && GOOS=windows GOARCH=amd64 $HOME/go/bin/go build -ldflags "-H windowsgui" -o md2pdf.exe . && rm md2pdf.exe.old md2pdf_linux /tmp/t.md /tmp/t.pdf 2>/dev/null; ls -la md2p 
+16:01:09	Bash	which mmdc; which node; node --version 2>&1; npx --version 2>&1 
+16:01:15	Read	/mnt/d/_workspace/cc/md2pdf-tool/converter.go 
+16:04:04	Read	/mnt/d/_workspace/cc/md2pdf-tool/gui_windows.go 
+16:04:08	Grep	ConvertFile|Convert\(|theme|DefaultTheme 
+16:04:27	Read	/mnt/d/_workspace/cc/md2pdf-tool/gui_windows.go 
+16:04:31	Read	/mnt/d/_workspace/cc/md2pdf-tool/gui_windows.go 
+16:05:08	Read	/home/gml/go/pkg/mod/github.com/stephenafamo/goldmark-pdf@v0.4.2/renderer_funcs.go 
+16:05:15	Bash	grep -n "webFs\|inlineFs\|mergeFs" /home/gml/go/pkg/mod/github.com/stephenafamo/goldmark-pdf@v0.4.2/*.go 
+16:05:23	Read	/home/gml/go/pkg/mod/github.com/stephenafamo/goldmark-pdf@v0.4.2/fs.go 
+16:05:33	Bash	grep -n "getImageMime\|getFileMime\|image/" /home/gml/go/pkg/mod/github.com/stephenafamo/goldmark-pdf@v0.4.2/*.go | head -20 
+16:05:56	Write	/mnt/d/_workspace/cc/md2pdf-tool/mermaid.go 
+16:06:01	Read	/mnt/d/_workspace/cc/md2pdf-tool/converter.go 
+16:06:14	Edit	/mnt/d/_workspace/cc/md2pdf-tool/converter.go 
+16:06:20	Edit	/mnt/d/_workspace/cc/md2pdf-tool/converter.go 
+16:06:42	Edit	/mnt/d/_workspace/cc/md2pdf-tool/converter.go 
+16:06:50	Edit	/mnt/d/_workspace/cc/md2pdf-tool/gui_other.go 
+16:06:55	Read	/mnt/d/_workspace/cc/md2pdf-tool/gui_windows.go 
+16:07:05	Edit	/mnt/d/_workspace/cc/md2pdf-tool/gui_windows.go 
+16:07:12	Edit	/mnt/d/_workspace/cc/md2pdf-tool/gui_windows.go 
+16:07:19	Edit	/mnt/d/_workspace/cc/md2pdf-tool/gui_windows.go 
+16:07:26	Edit	/mnt/d/_workspace/cc/md2pdf-tool/gui_windows.go 
+16:07:34	Edit	/mnt/d/_workspace/cc/md2pdf-tool/gui_windows.go 
+16:07:42	Edit	/mnt/d/_workspace/cc/md2pdf-tool/gui_windows.go 
+16:07:51	Bash	$HOME/go/bin/go build -o md2pdf_linux . 2>&1 | tail -10 
+16:08:13	Read	/home/gml/go/pkg/mod/github.com/stephenafamo/goldmark-pdf@v0.4.2/fs.go 
+16:08:20	Bash	curl -sI "https://mermaid.ink/img/Zmxvd2NoYXJ0IFRECiAgICBBLS0-Qg==?type=png" 2>&1 | head -10 
+16:08:36	Bash	grep -n "Step 1\|flowchart" /tmp/t.md | head -3; wc -c /tmp/t.md 
+16:08:44	Bash	python3 -c " import base64, sys with open('/tmp/t.md') as f:     src = f.read() import re m = re.search(r'\`\`\`mermaid\n(.*?)\n\`\`\`', src, re.DOTALL) if m:     b = base64.urlsafe_b64encode(m.group( 
+16:09:27	Bash	echo 'flowchart TD A-->B' | curl -s -X POST -H "Content-Type: text/plain" --data-binary @- https://kroki.io/mermaid/png -o /tmp/test.png -w "%{http_code}\n" && file /tmp/test.png 
+16:09:51	Write	/mnt/d/_workspace/cc/md2pdf-tool/mermaid.go 
+16:09:57	Edit	/mnt/d/_workspace/cc/md2pdf-tool/converter.go 
+16:10:11	Bash	$HOME/go/bin/go build -o md2pdf_linux . 2>&1 | tail -5 && ./md2pdf_linux /tmp/t.md && python3 -c " with open('/tmp/t.pdf','rb') as f: d=f.read() print('Image XObjects:', d.count(b'/Subtype /Image')) p 
+16:10:24	Edit	/mnt/d/_workspace/cc/md2pdf-tool/mermaid.go 
+16:10:36	Bash	$HOME/go/bin/go build -o md2pdf_linux . && ./md2pdf_linux /tmp/t.md && python3 -c " with open('/tmp/t.pdf','rb') as f: d=f.read() print('Image XObjects:', d.count(b'/Subtype /Image')) print('size:', l 
+16:10:42	Bash	grep -c "^\`\`\`mermaid" /tmp/t.md 
+16:10:52	Bash	mv md2pdf.exe md2pdf.exe.old 2>/dev/null; GOOS=windows GOARCH=amd64 $HOME/go/bin/go build -ldflags "-H windowsgui" -o md2pdf.exe . && rm -f md2pdf.exe.old md2pdf_linux /tmp/t.md /tmp/t.pdf /tmp/test.p 
+16:19:07	Edit	/mnt/d/_workspace/cc/md2pdf-tool/mermaid.go 
+16:19:17	Bash	mv md2pdf.exe md2pdf.exe.old 2>/dev/null; GOOS=windows GOARCH=amd64 $HOME/go/bin/go build -ldflags "-H windowsgui" -o md2pdf.exe . && rm -f md2pdf.exe.old; ls -la md2pdf.exe 
+16:23:03	Read	/home/gml/go/pkg/mod/github.com/stephenafamo/goldmark-pdf@v0.4.2/pdf.go 
+16:23:09	Read	/home/gml/go/pkg/mod/github.com/stephenafamo/goldmark-pdf@v0.4.2/fpdf.go 
+16:23:55	Bash	grep -n "Register\|AddOptions\|RegisterFuncs\|NodeRenderer" /home/gml/go/pkg/mod/github.com/stephenafamo/goldmark-pdf@v0.4.2/*.go | head -20 
+16:24:00	Read	/home/gml/go/pkg/mod/github.com/stephenafamo/goldmark-pdf@v0.4.2/config.go 
+16:24:05	Read	/home/gml/go/pkg/mod/github.com/stephenafamo/goldmark-pdf@v0.4.2/renderer.go 
+16:24:10	Read	/home/gml/go/pkg/mod/github.com/stephenafamo/goldmark-pdf@v0.4.2/renderer.go 
+16:24:14	Read	/home/gml/go/pkg/mod/github.com/stephenafamo/goldmark-pdf@v0.4.2/renderer.go 
+16:24:39	Read	/home/gml/go/pkg/mod/github.com/stephenafamo/goldmark-pdf@v0.4.2/writer.go 
+16:25:14	Bash	grep -n "GetImageInfo\|ImageInfo\|Image\b" /home/gml/go/pkg/mod/github.com/phpdave11/gofpdf@*/fpdf.go 2>/dev/null | head -10; ls ~/go/pkg/mod/github.com/phpdave11/ 
+16:25:20	Bash	grep -n "func (f \*Fpdf) .*ImageInfo\|func (f \*Fpdf) GetImageInfo\|func (f \*Fpdf) Image(" /home/gml/go/pkg/mod/github.com/phpdave11/gofpdf@v1.4.3/fpdf.go | head 
+16:25:27	Bash	grep -n "^func.*ImageInfoType.*Width\|^func.*ImageInfoType.*Height" /home/gml/go/pkg/mod/github.com/phpdave11/gofpdf@v1.4.3/image.go 2>/dev/null; grep -n "type ImageInfoType\|Width\s*func\|Height\s*fu 
+16:25:32	Bash	grep -n "Width\|Height" /home/gml/go/pkg/mod/github.com/phpdave11/gofpdf@v1.4.3/def.go | head -10; grep -nE "func \(info \*ImageInfoType\)" /home/gml/go/pkg/mod/github.com/phpdave11/gofpdf@v1.4.3/*.go 
+16:25:44	Read	/home/gml/go/pkg/mod/github.com/stephenafamo/goldmark-pdf@v0.4.2/renderer_funcs.go 
+16:25:51	Bash	grep -n "type states\|type state\|func.*states\|func.*state)" /home/gml/go/pkg/mod/github.com/stephenafamo/goldmark-pdf@v0.4.2/state.go 2>/dev/null; ls /home/gml/go/pkg/mod/github.com/stephenafamo/gol 
+16:26:56	Write	/mnt/d/_workspace/cc/md2pdf-tool/image_renderer.go 
+16:27:04	Bash	grep -n "NodeRendererFuncRegisterer\|type NodeRenderer\b\|RegisterFuncs" /home/gml/go/pkg/mod/github.com/stephenafamo/goldmark-pdf@v0.4.2/*.go | head 
+16:27:15	Edit	/mnt/d/_workspace/cc/md2pdf-tool/image_renderer.go 
+16:27:22	Edit	/mnt/d/_workspace/cc/md2pdf-tool/image_renderer.go 
+16:27:30	Edit	/mnt/d/_workspace/cc/md2pdf-tool/image_renderer.go 
+16:27:39	Edit	/mnt/d/_workspace/cc/md2pdf-tool/converter.go 
+16:27:51	Bash	$HOME/go/bin/go build -o md2pdf_linux . 2>&1 | tail -15 
+16:28:04	Bash	cp "/mnt/d/_workspace/obsidian/010.KRIBB/010.Projects/999.UNIST/010.PA1_revision_R1/송현_metY1_클로닝_20260413.md" /tmp/t.md && ./md2pdf_linux /tmp/t.md && python3 << 'PYEOF' from pdfminer.high_l 
+16:28:15	Bash	python3 << 'PYEOF' from pdfminer.high_level import extract_pages from pdfminer.layout import LTImage, LTFigure, LTTextContainer, LTTextLine for pi, page in enumerate(extract_pages('/tmp/t.pdf')):      
+16:28:53	Bash	mv md2pdf.exe md2pdf.exe.old 2>/dev/null; GOOS=windows GOARCH=amd64 $HOME/go/bin/go build -ldflags "-H windowsgui" -o md2pdf.exe . && rm -f md2pdf.exe.old md2pdf_linux /tmp/t.md /tmp/t.pdf; ls -la md2 
+16:28:58	Bash	rm md2pdf.exe.old md2pdf_linux /tmp/t.md /tmp/t.pdf 2>&1 | head; ls md2pdf.exe* 
+16:42:01	Edit	/mnt/d/_workspace/cc/md2pdf-tool/image_renderer.go 
+16:42:48	Bash	find /mnt/d/_workspace/obsidian -name "Pasted image 20260413162407.png" 2>/dev/null | head -3 
+16:43:09	Read	/mnt/d/_workspace/cc/md2pdf-tool/converter.go 
+16:43:47	Write	/mnt/d/_workspace/cc/md2pdf-tool/attachments.go 
+16:43:54	Edit	/mnt/d/_workspace/cc/md2pdf-tool/converter.go 
+16:43:58	Bash	ls md2pdf.exe 2>&1; rm md2pdf.exe 2>&1 | head 
+16:44:07	Bash	$HOME/go/bin/go build -o md2pdf_linux . 2>&1 | tail -10 
+16:44:48	Bash	cp "/mnt/d/_workspace/obsidian/010.KRIBB/010.Projects/999.UNIST/010.PA1_revision_R1/송현_metY1_클로닝_20260413.md" /tmp/t.md && ./md2pdf_linux /tmp/t.md 2>&1 | tail -5 && python3 << 'PYEOF' from  
+16:46:36	Bash	cd /mnt/d/_workspace/cc/md2pdf-tool && ./md2pdf_linux "/mnt/d/_workspace/obsidian/010.KRIBB/010.Projects/999.UNIST/010.PA1_revision_R1/송현_metY1_클로닝_20260413_test.md" 2>&1 | tail -5 && python 
+16:46:42	Bash	grep -c "!\[\[" "/mnt/d/_workspace/obsidian/010.KRIBB/010.Projects/999.UNIST/010.PA1_revision_R1/송현_metY1_클로닝_20260413.md" grep -n "!\[\[" "/mnt/d/_workspace/obsidian/010.KRIBB/010.Projects/ 
+16:46:49	Bash	ls "/mnt/d/_workspace/obsidian/010.KRIBB/010.Projects/999.UNIST/010.PA1_revision_R1/_md2pdf_cache/" 2>&1; ls /mnt/d/_workspace/obsidian/090.Assets/010.Images/ | grep "20260413162" | head 
+16:46:57	Bash	ls -d /mnt/d/_workspace/obsidian/.obsidian 2>&1; find /mnt/d/_workspace/obsidian -maxdepth 2 -name ".obsidian" 2>/dev/null | head 
+16:47:07	Bash	python3 -c " import re r = re.compile(r'!\[\[([^\[\]]+)\]\]') print(r.findall('![[Pasted image 20260413162407.png]]')) " 
+16:47:17	Read	/mnt/d/_workspace/obsidian/010.KRIBB/010.Projects/999.UNIST/010.PA1_revision_R1/송현_metY1_클로닝_20260413.md 
+16:47:41	Edit	/mnt/d/_workspace/cc/md2pdf-tool/attachments.go 
+16:48:11	Bash	$HOME/go/bin/go build -o md2pdf_linux . && ./md2pdf_linux "/mnt/d/_workspace/obsidian/010.KRIBB/010.Projects/999.UNIST/010.PA1_revision_R1/송현_metY1_클로닝_20260413_test.md" 2>&1 | tail -10 
+16:48:21	Bash	python3 << 'PYEOF' from pdfminer.high_level import extract_pages from pdfminer.layout import LTImage, LTFigure path = "/mnt/d/_workspace/obsidian/010.KRIBB/010.Projects/999.UNIST/010.PA1_revision_R1/� 
+16:48:55	Edit	/mnt/d/_workspace/cc/md2pdf-tool/image_renderer.go 
+16:49:28	Bash	$HOME/go/bin/go build -o md2pdf_linux . && ./md2pdf_linux "/mnt/d/_workspace/obsidian/010.KRIBB/010.Projects/999.UNIST/010.PA1_revision_R1/송현_metY1_클로닝_20260413_test.md" 2>&1 | grep -E "IMAG 
+16:49:43	Edit	/mnt/d/_workspace/cc/md2pdf-tool/attachments.go 
+16:49:49	Edit	/mnt/d/_workspace/cc/md2pdf-tool/attachments.go 
+16:50:21	Bash	$HOME/go/bin/go build -o md2pdf_linux . && ./md2pdf_linux "/mnt/d/_workspace/obsidian/010.KRIBB/010.Projects/999.UNIST/010.PA1_revision_R1/송현_metY1_클로닝_20260413_test.md" 2>&1 | grep -E "IMAG 
+16:50:35	Edit	/mnt/d/_workspace/cc/md2pdf-tool/attachments.go 
+16:50:43	Edit	/mnt/d/_workspace/cc/md2pdf-tool/attachments.go 
+16:50:50	Edit	/mnt/d/_workspace/cc/md2pdf-tool/attachments.go 
+16:51:00	Edit	/mnt/d/_workspace/cc/md2pdf-tool/image_renderer.go 
+16:51:07	Bash	ls md2pdf.exe 2>&1; rm md2pdf.exe 2>&1 
+16:51:19	Bash	GOOS=windows GOARCH=amd64 $HOME/go/bin/go build -ldflags "-H windowsgui" -o md2pdf.exe . && ls -la md2pdf.exe && rm md2pdf_linux "/mnt/d/_workspace/obsidian/010.KRIBB/010.Projects/999.UNIST/010.PA1_re 
+16:53:01	Read	/home/gml/go/pkg/mod/github.com/stephenafamo/goldmark-pdf@v0.4.2/state.go 
+16:53:41	Edit	/mnt/d/_workspace/cc/md2pdf-tool/image_renderer.go 
+16:54:04	Edit	/mnt/d/_workspace/cc/md2pdf-tool/image_renderer.go 
+16:54:10	Edit	/mnt/d/_workspace/cc/md2pdf-tool/image_renderer.go 
+16:54:22	Edit	/mnt/d/_workspace/cc/md2pdf-tool/image_renderer.go 
+16:54:31	Read	/mnt/d/_workspace/cc/md2pdf-tool/image_renderer.go 
+16:54:39	Edit	/mnt/d/_workspace/cc/md2pdf-tool/image_renderer.go 
+16:54:47	Edit	/mnt/d/_workspace/cc/md2pdf-tool/image_renderer.go 
+16:54:52	Read	/mnt/d/_workspace/cc/md2pdf-tool/image_renderer.go 
+16:55:00	Read	/mnt/d/_workspace/cc/md2pdf-tool/image_renderer.go 
+16:55:09	Edit	/mnt/d/_workspace/cc/md2pdf-tool/image_renderer.go 
+16:55:17	Bash	$HOME/go/bin/go build -o md2pdf_linux . 2>&1 | tail -5 
+16:55:50	Bash	cp "/mnt/d/_workspace/obsidian/010.KRIBB/010.Projects/999.UNIST/010.PA1_revision_R1/송현_metY1_클로닝_20260413.md" "/mnt/d/_workspace/obsidian/010.KRIBB/010.Projects/999.UNIST/010.PA1_revision_R1 
+16:55:58	Bash	ls md2pdf.exe 2>&1; rm md2pdf.exe 2>&1 | head 
+16:56:33	Bash	git status && echo "---" && git log --oneline -10 
+16:56:39	Bash	ls /mnt/d/_workspace/cc/md2pdf-tool/*.md 
+16:56:44	Read	/mnt/d/_workspace/cc/md2pdf-tool/README.md 
+16:56:50	Read	/mnt/d/_workspace/cc/md2pdf-tool/CLAUDE.md 
+16:57:10	Edit	/mnt/d/_workspace/cc/md2pdf-tool/README.md 
+16:57:30	Edit	/mnt/d/_workspace/cc/md2pdf-tool/README.md 
+16:57:45	Edit	/mnt/d/_workspace/cc/md2pdf-tool/README.md 
+16:57:53	Skill	- 
+16:58:14	Bash	ls src-tauri 2>&1; ls package.json 2>&1 
+16:58:20	Bash	cat package.json | head -5 
+16:58:40	Read	/mnt/d/_workspace/cc/md2pdf-tool/package.json 
+16:58:48	Bash	git add converter.go font.go gui_other.go gui_windows.go attachments.go image_renderer.go mermaid.go _fonts/Pretendard-Regular.ttf _fonts/Pretendard-Bold.ttf _fonts/D2Coding-Regular.ttf _fonts/D2Codin 
+16:59:08	Bash	git commit -m "$(cat <<'EOF' v1.5: D2Coding·이모지 내장 + Mermaid·Obsidian 임베드 렌더링 + 이미지 폭/레이아웃 개선  - 코드 폰트: 시스템 Malgun Gothic → 임베디드 D2C 
+16:59:21	Bash	git push 2>&1 | tail -5 
