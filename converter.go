@@ -21,8 +21,15 @@ import (
 	gpdf "github.com/stephenafamo/goldmark-pdf"
 )
 
+// ConvertOptions controls conversion behavior. Zero values select defaults.
+type ConvertOptions struct {
+	Theme     string
+	FontScale string // key into FontPresets; empty = default
+	Mermaid   MermaidMode
+}
+
 // ConvertFile reads a markdown file and writes a PDF to the output path.
-func ConvertFile(inputPath, outputPath, theme string) error {
+func ConvertFile(inputPath, outputPath string, opts ConvertOptions) error {
 	mdBytes, err := os.ReadFile(inputPath)
 	if err != nil {
 		return fmt.Errorf("reading input: %w", err)
@@ -33,7 +40,7 @@ func ConvertFile(inputPath, outputPath, theme string) error {
 		return fmt.Errorf("resolving base dir: %w", err)
 	}
 
-	pdfBytes, err := Convert(mdBytes, baseDir, theme)
+	pdfBytes, err := Convert(mdBytes, baseDir, opts)
 	if err != nil {
 		return err
 	}
@@ -46,11 +53,15 @@ func ConvertFile(inputPath, outputPath, theme string) error {
 }
 
 // Convert takes markdown bytes and returns PDF bytes.
-func Convert(mdBytes []byte, baseDir, theme string) ([]byte, error) {
+func Convert(mdBytes []byte, baseDir string, opts ConvertOptions) ([]byte, error) {
 	ctx := context.Background()
 	mdBytes = stripFrontmatter(mdBytes)
+	mdBytes = resolveAttachments(mdBytes, baseDir)
 	mdBytes = simplifyWikilinks(mdBytes)
 	mdBytes = normalizePlainTextArrows(mdBytes)
+	mdBytes = expandHardLineBreaks(mdBytes)
+	mdBytes = transformMermaidBlocks(mdBytes, opts.Mermaid, baseDir)
+	defer cleanupMermaidCache(baseDir)
 
 	// Create PDF with footer (page number)
 	fpdfObj := gpdf.NewFpdf(ctx, gpdf.FpdfConfig{
@@ -74,13 +85,16 @@ func Convert(mdBytes []byte, baseDir, theme string) ([]byte, error) {
 	}
 
 	// Build styles
-	st := pdfStyles(textFont, codeFont, theme)
+	st := pdfStyles(textFont, codeFont, opts.Theme, opts.FontScale)
 
-	// Configure renderer
+	// Configure renderer; a custom image renderer overrides the default to
+	// clamp width and move an orphaned heading to the next page.
 	renderer := gpdf.New(
 		gpdf.WithPDF(fpdfObj),
 		gpdf.WithImageFS(http.Dir(baseDir)),
 		gpdf.WithContext(ctx),
+		gpdf.WithEscapeHTML(false),
+		gpdf.WithNodeRenderers(newImageNodeRenderer(fpdfObj, &st)),
 		gpdf.OptionFunc(func(c *gpdf.Config) {
 			c.Styles = st
 		}),
@@ -180,8 +194,74 @@ func normalizePlainTextArrows(mdBytes []byte) []byte {
 	return []byte(strings.Join(lines, "\n"))
 }
 
-// pdfStyles returns a themed style set based on the given theme name.
-func pdfStyles(text, code gpdf.Font, theme string) gpdf.Styles {
+// expandHardLineBreaks converts CommonMark hard line breaks (trailing `  ` or
+// `\` before a newline) into blank-line-separated paragraphs, since
+// goldmark-pdf v0.4.2 does not render hard breaks (writer.go flattens `\n` to
+// space). Skips fenced code blocks.
+func expandHardLineBreaks(mdBytes []byte) []byte {
+	lines := strings.Split(string(mdBytes), "\n")
+	inFence := false
+	out := make([]string, 0, len(lines)*2)
+
+	for _, line := range lines {
+		trimmed := strings.TrimLeft(line, " \t")
+		if strings.HasPrefix(trimmed, "```") || strings.HasPrefix(trimmed, "~~~") {
+			inFence = !inFence
+			out = append(out, line)
+			continue
+		}
+		if inFence {
+			out = append(out, line)
+			continue
+		}
+
+		stripped := strings.TrimRight(line, "\r")
+		hardBreak := false
+		switch {
+		case strings.HasSuffix(stripped, "  "):
+			stripped = strings.TrimRight(stripped, " ")
+			hardBreak = true
+		case strings.HasSuffix(stripped, "\\") && !strings.HasSuffix(stripped, "\\\\"):
+			stripped = strings.TrimSuffix(stripped, "\\")
+			hardBreak = true
+		}
+
+		out = append(out, stripped)
+		if hardBreak {
+			out = append(out, "")
+		}
+	}
+
+	return []byte(strings.Join(out, "\n"))
+}
+
+// FontPreset scales the base font sizes uniformly.
+type FontPreset struct {
+	Name       string
+	Label      string
+	SizeMul    float64 // multiplier applied to font sizes
+	SpacingMul float64 // multiplier applied to line spacing
+}
+
+// FontPresets enumerates the selectable font-size presets (GUI order).
+var FontPresets = []FontPreset{
+	{"default", "기본", 1.00, 1.00},
+	{"small", "소폭 축소 (약 10%)", 0.90, 0.90},
+	{"compact", "중간 축소 (약 17%)", 0.83, 0.80},
+	{"dense", "조밀 (약 22%)", 0.78, 0.70},
+}
+
+func fontPreset(name string) FontPreset {
+	for _, p := range FontPresets {
+		if p.Name == name {
+			return p
+		}
+	}
+	return FontPresets[0]
+}
+
+// pdfStyles returns a themed style set scaled by the font preset.
+func pdfStyles(text, code gpdf.Font, theme, scaleName string) gpdf.Styles {
 	white := color.RGBA{255, 255, 255, 0}
 
 	tc, ok := Themes[theme]
@@ -189,19 +269,23 @@ func pdfStyles(text, code gpdf.Font, theme string) gpdf.Styles {
 		tc = Themes[DefaultTheme]
 	}
 
+	p := fontPreset(scaleName)
+	sz := func(v float64) float64 { return v * p.SizeMul }
+	sp := func(v float64) float64 { return v * p.SpacingMul }
+
 	return gpdf.Styles{
-		H1: &gpdf.Style{Font: text, Size: 18, Spacing: 6, TextColor: tc.H1, FillColor: white},
-		H2: &gpdf.Style{Font: text, Size: 14, Spacing: 5, TextColor: tc.H2, FillColor: white},
-		H3: &gpdf.Style{Font: text, Size: 12, Spacing: 4, TextColor: tc.H3, FillColor: white},
-		H4: &gpdf.Style{Font: text, Size: 11, Spacing: 3, TextColor: tc.H4, FillColor: white},
-		H5: &gpdf.Style{Font: text, Size: 10, Spacing: 3, TextColor: tc.H5, FillColor: white},
-		H6: &gpdf.Style{Font: text, Size: 10, Spacing: 3, TextColor: tc.H6, FillColor: white},
+		H1: &gpdf.Style{Font: text, Size: sz(18), Spacing: sp(6), TextColor: tc.H1, FillColor: white},
+		H2: &gpdf.Style{Font: text, Size: sz(14), Spacing: sp(5), TextColor: tc.H2, FillColor: white},
+		H3: &gpdf.Style{Font: text, Size: sz(12), Spacing: sp(4), TextColor: tc.H3, FillColor: white},
+		H4: &gpdf.Style{Font: text, Size: sz(11), Spacing: sp(3), TextColor: tc.H4, FillColor: white},
+		H5: &gpdf.Style{Font: text, Size: sz(10), Spacing: sp(3), TextColor: tc.H5, FillColor: white},
+		H6: &gpdf.Style{Font: text, Size: sz(10), Spacing: sp(3), TextColor: tc.H6, FillColor: white},
 
-		Normal:     &gpdf.Style{Font: text, Size: 10, Spacing: 2, TextColor: tc.TextNormal, FillColor: white},
-		Blockquote: &gpdf.Style{Font: text, Size: 10, Spacing: 1.5, TextColor: tc.TextMuted, FillColor: white},
+		Normal:     &gpdf.Style{Font: text, Size: sz(10), Spacing: sp(2), TextColor: tc.TextNormal, FillColor: white},
+		Blockquote: &gpdf.Style{Font: text, Size: sz(10), Spacing: sp(1.5), TextColor: tc.TextMuted, FillColor: white},
 
-		THeader: &gpdf.Style{Font: text, Size: 9, Spacing: 2, TextColor: tc.TextNormal, FillColor: tc.TableHeaderBg},
-		TBody:   &gpdf.Style{Font: text, Size: 9, Spacing: 2, TextColor: tc.TextNormal, FillColor: tc.TableRowBg},
+		THeader: &gpdf.Style{Font: text, Size: sz(9), Spacing: sp(2), TextColor: tc.TextNormal, FillColor: tc.TableHeaderBg},
+		TBody:   &gpdf.Style{Font: text, Size: sz(9), Spacing: sp(2), TextColor: tc.TextNormal, FillColor: tc.TableRowBg},
 
 		CodeFont:       code,
 		CodeBlockTheme: codeHighlightTheme(tc.CodeBg, tc.CodeText),
@@ -234,6 +318,10 @@ func codeHighlightTheme(bgHex, textHex string) *chroma.Style {
 	s, err := base.Builder().
 		Add(chroma.Background, entry).
 		Add(chroma.Text, entry).
+		Add(chroma.Keyword, textHex).
+		Add(chroma.KeywordType, textHex).
+		Add(chroma.Error, entry).
+		Add(chroma.GenericDeleted, entry).
 		Build()
 	if err != nil {
 		return base

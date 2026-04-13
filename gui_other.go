@@ -17,7 +17,7 @@ func runGUI() {
 		for _, input := range os.Args[1:] {
 			output := strings.TrimSuffix(input, filepath.Ext(input)) + ".pdf"
 			fmt.Printf("Converting: %s\n", input)
-			if err := ConvertFile(input, output, DefaultTheme); err != nil {
+			if err := ConvertFile(input, output, ConvertOptions{Theme: DefaultTheme}); err != nil {
 				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 				continue
 			}

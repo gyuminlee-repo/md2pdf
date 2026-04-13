@@ -16,6 +16,12 @@ var pretendardRegular []byte
 //go:embed _fonts/Pretendard-Bold.ttf
 var pretendardBold []byte
 
+//go:embed _fonts/D2Coding-Regular.ttf
+var d2codingRegular []byte
+
+//go:embed _fonts/D2Coding-Bold.ttf
+var d2codingBold []byte
+
 // fontSearchPaths returns candidate directories for font files.
 func fontSearchPaths() []string {
 	var paths []string
@@ -87,15 +93,22 @@ func registerFonts(pdfObj pdf.PDF) (textFont, codeFont pdf.Font, err error) {
 	}
 	textFont = pretendardSet.Font
 
-	// Code font: Malgun Gothic (has box-drawing chars ├└ that Pretendard lacks)
-	codeSet, codeErr := loadFontSet("MalgunCode", "malgun.ttf", "malgunbd.ttf", "", "")
-	if codeErr == nil {
-		codeSet.Font.CanUseForCode = true
-		if err := registerFontSet(pdfObj, codeSet); err != nil {
-			return textFont, codeFont, fmt.Errorf("registering MalgunCode: %w", err)
-		}
-		codeFont = codeSet.Font
+	// Code font: D2Coding (embedded monospace with Korean + Mac symbols ⌘⌥⌃⇧ + box chars ├└)
+	d2Set := &FontSet{
+		Font: pdf.Font{
+			Family:        "D2Coding",
+			Type:          pdf.FontTypeCustom,
+			CanUseForCode: true,
+		},
+		Regular:    d2codingRegular,
+		Bold:       d2codingBold,
+		Italic:     d2codingRegular,
+		BoldItalic: d2codingBold,
 	}
+	if err := registerFontSet(pdfObj, d2Set); err != nil {
+		return textFont, codeFont, fmt.Errorf("registering D2Coding: %w", err)
+	}
+	codeFont = d2Set.Font
 
 	return textFont, codeFont, nil
 }

@@ -420,8 +420,12 @@ func runGUI() {
 		return handleBrowse()
 	})
 
-	w.Bind("_convertFiles", func(paths []string, theme string) map[string]interface{} {
-		return handleConvert(paths, theme, w)
+	w.Bind("_convertFiles", func(paths []string, theme, scale, mermaid string) map[string]interface{} {
+		return handleConvert(paths, ConvertOptions{
+			Theme:     theme,
+			FontScale: scale,
+			Mermaid:   MermaidMode(mermaid),
+		}, w)
 	})
 
 	w.Bind("_getVersion", func() string {
@@ -430,6 +434,22 @@ func runGUI() {
 
 	w.Bind("_getThemes", func() []ThemeEntry {
 		return ThemeList()
+	})
+
+	w.Bind("_getFontScales", func() []map[string]string {
+		out := make([]map[string]string, 0, len(FontPresets))
+		for _, p := range FontPresets {
+			out = append(out, map[string]string{"value": p.Name, "label": p.Label})
+		}
+		return out
+	})
+
+	w.Bind("_getMermaidModes", func() []map[string]string {
+		out := make([]map[string]string, 0, len(MermaidModes))
+		for _, m := range MermaidModes {
+			out = append(out, map[string]string{"value": string(m.Value), "label": m.Label})
+		}
+		return out
 	})
 
 	w.Bind("_removeFile", func(key string) []string {
@@ -576,7 +596,7 @@ func handleBrowse() []string {
 
 // ── Convert handler ──────────────────────────────────────────
 
-func handleConvert(paths []string, theme string, w webview2.WebView) map[string]interface{} {
+func handleConvert(paths []string, opts ConvertOptions, w webview2.WebView) map[string]interface{} {
 	if len(paths) == 0 {
 		return map[string]interface{}{
 			"ok":   0,
@@ -601,7 +621,7 @@ func handleConvert(paths []string, theme string, w webview2.WebView) map[string]
 		if outputDir != "" {
 			out = filepath.Join(outputDir, filepath.Base(out))
 		}
-		if err := ConvertFile(in, out, theme); err != nil {
+		if err := ConvertFile(in, out, opts); err != nil {
 			fail++
 		} else {
 			ok++
@@ -958,6 +978,10 @@ func buildHTML() string {
 <div class="theme-bar">
   <span class="theme-label">테마:</span>
   <select id="themeSelect"></select>
+  <span class="theme-label" style="margin-left:12px;">글씨 크기:</span>
+  <select id="scaleSelect"></select>
+  <span class="theme-label" style="margin-left:12px;">Mermaid:</span>
+  <select id="mermaidSelect"></select>
 </div>
 
 <div class="output-bar" id="outputBar">
@@ -1005,6 +1029,24 @@ func buildHTML() string {
       opt.value = t.Name;
       opt.textContent = t.Name + ' — ' + t.Description;
       sel.appendChild(opt);
+    });
+
+    const scales = await _getFontScales();
+    const scaleSel = document.getElementById('scaleSelect');
+    scales.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.value;
+      opt.textContent = s.label;
+      scaleSel.appendChild(opt);
+    });
+
+    const modes = await _getMermaidModes();
+    const mermaidSel = document.getElementById('mermaidSelect');
+    modes.forEach(m => {
+      const opt = document.createElement('option');
+      opt.value = m.value;
+      opt.textContent = m.label;
+      mermaidSel.appendChild(opt);
     });
 
     if (window._initialFiles && window._initialFiles.length > 0) {
@@ -1084,7 +1126,9 @@ func buildHTML() string {
     setStatus('변환 준비 중...', 'progress');
 
     const theme = document.getElementById('themeSelect').value;
-    const result = await _convertFiles(files, theme);
+    const scale = document.getElementById('scaleSelect').value;
+    const mermaid = document.getElementById('mermaidSelect').value;
+    const result = await _convertFiles(files, theme, scale, mermaid);
     converting = false;
 
     if (result.fail > 0) {
