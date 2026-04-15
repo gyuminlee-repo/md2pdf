@@ -51,3 +51,5 @@ timestamp	tool	detail
 18:38:35	Edit	/mnt/d/_workspace/cc/md2pdf-tool/gui_windows.go 
 18:40:57	Bash	which go 2>/dev/null || ls ~/go-sdk/go/bin/go 2>/dev/null || ls /usr/local/go/bin/go 2>/dev/null 
 18:43:29	Bash	export PATH=~/go-sdk/go/bin:$PATH && GOOS=windows GOARCH=amd64 go build -ldflags="-s -w -H windowsgui -X main.version=1.4" -o md2pdf.exe . 2>&1 
+19:49:58	Bash	cd /mnt/d/_workspace/cc/md2pdf-tool && git add -A && git commit -m "v1.05: converter/GUI 개선, theme 추가, claude 설정" 
+19:50:24	Bash	cd /mnt/d/_workspace/cc/md2pdf-tool && git push 2>&1 

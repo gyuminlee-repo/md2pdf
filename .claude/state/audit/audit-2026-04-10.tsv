@@ -1,0 +1,26 @@
+timestamp	tool	detail
+13:13:13	Glob	**/*.py 
+13:13:18	Glob	**/* 
+13:13:23	Read	/mnt/d/_workspace/cc/md2pdf-tool/converter.go 
+13:13:26	Read	/mnt/d/_workspace/cc/md2pdf-tool/test/sample.md 
+13:13:37	Read	/mnt/d/_workspace/cc/md2pdf-tool/font.go 
+13:15:04	Read	/mnt/d/_workspace/obsidian/000.Daily_Dashboard.md 
+13:16:18	Grep	^\|.*\|.*\|$ 
+13:16:55	Grep	```dataview|> \[!|```dataviewjs 
+13:16:59	Read	/mnt/d/_workspace/obsidian/050.LLM_Wiki/concepts/phenol_induction_optimization.md 
+13:17:06	Read	/mnt/d/_workspace/obsidian/050.LLM_Wiki/concepts/phenol_induction_optimization.md 
+13:27:38	Edit	/mnt/d/_workspace/cc/md2pdf-tool/converter.go 
+13:27:44	Edit	/mnt/d/_workspace/cc/md2pdf-tool/converter.go 
+13:28:02	Edit	/mnt/d/_workspace/cc/md2pdf-tool/converter.go 
+13:28:28	Read	/mnt/d/_workspace/cc/md2pdf-tool/converter.go 
+13:40:06	Read	/mnt/d/_workspace/cc/md2pdf-tool/_tmp/build.sh 
+13:54:03	Read	/mnt/d/_workspace/cc/md2pdf-tool/main.go 
+13:54:11	Read	/mnt/d/_workspace/cc/md2pdf-tool/_tmp/gui_other.go 
+13:54:17	Read	/mnt/d/_workspace/cc/md2pdf-tool/gui_windows.go 
+13:54:47	Grep	os\.Args|ConvertFile 
+13:54:50	Read	/mnt/d/_workspace/cc/md2pdf-tool/gui_windows.go 
+13:54:59	Read	/mnt/d/_workspace/cc/md2pdf-tool/go.mod 
+13:55:27	Write	/mnt/d/_workspace/cc/md2pdf-tool/gui_other.go 
+13:55:32	Grep	DefaultTheme 
+13:58:20	Skill	- 
+13:58:37	Glob	.git/refs/tags/* 
