@@ -1,0 +1,1 @@
+{"timestamp": "2026-05-04-180155", "tool": "Bash", "error": "Exit code 1\n=== claude-dotfiles untracked: scan suspicious patterns ===\n\n=== octo-extract directory scan ===\nskills/octo-extract/SKILL.md\n\n=== PrimerBench: tsv/jsonl 자동생성 파일 내용 키워드 검사 (개인정보) ===\n.claude/state/audit/audit-2026-05-02.tsv\n.claude/state/audit/audit-2026\n"}

@@ -1,0 +1,5 @@
+timestamp	tool	detail
+17:56:49	Bash	echo "=== gml-tmux-kit ===" && cd /mnt/d/_workspace/cc/gml-tmux-kit && git status -sb echo "=== md2pdf-tool ===" && cd /mnt/d/_workspace/cc/md2pdf-tool && git status -sb echo "=== claude-dotfiles ===" 
+17:57:04	Bash	cd /mnt/d/_workspace/cc/md2pdf-tool && git status --porcelain echo "---" git status --porcelain 
+18:00:22	Bash	echo "=== claude-dotfiles settings.json secret scan ===" grep -iEn 'sk-[a-zA-Z0-9]{20}|ghp_[a-zA-Z0-9]{20}|xox[baprs]-|AKIA|password|secret|token|bearer|api[_-]?key|webhook' /mnt/d/_workspace/cc/claud 
+18:01:43	Bash	PATTERNS='sk-[a-zA-Z0-9]{20}|ghp_[a-zA-Z0-9]{20}|gho_[a-zA-Z0-9]{20}|xox[baprs]-|AKIA[0-9A-Z]{16}|BEGIN [A-Z]+ PRIVATE KEY|hooks\.slack\.com|discord\.com/api/webhooks|api[_-]?key|secret|password|beare 
