@@ -77,3 +77,14 @@ test/sample.md     테스트용 한글 마크다운
 ```
 
 변환 중 `<md파일_폴더>/_md2pdf_cache/`에 Mermaid/임베드 이미지가 임시 저장되며, 변환 완료 후 자동 삭제됨.
+
+## 라이선스
+
+코드는 [MIT License](LICENSE) 를 따릅니다.
+
+실행 파일에 내장되는 글꼴은 MIT 가 아니라 각 글꼴의 SIL Open Font License 1.1 을 따릅니다.
+
+| 글꼴 | 저작권 | 라이선스 원문 |
+|---|---|---|
+| [Pretendard](https://github.com/orioncactus/pretendard) | Kil Hyung-jin | [`_fonts/OFL-Pretendard.txt`](_fonts/OFL-Pretendard.txt) |
+| [D2Coding](https://github.com/naver/d2codingfont) | NAVER Corporation | [`_fonts/OFL-D2Coding.txt`](_fonts/OFL-D2Coding.txt) |
