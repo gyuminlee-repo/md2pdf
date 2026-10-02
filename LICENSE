@@ -19,13 +19,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
----
-
-Bundled fonts (embedded into the binary via go:embed) are NOT covered by the
-MIT License above. They are distributed under the SIL Open Font License 1.1:
-
-- Pretendard (_fonts/Pretendard-*.ttf): see _fonts/OFL-Pretendard.txt
-  Copyright (c) 2021, Kil Hyung-jin, with Reserved Font Name 'Pretendard'.
-- D2Coding (_fonts/D2Coding-*.ttf): see _fonts/OFL-D2Coding.txt
-  Copyright (c) 2015, NAVER Corporation, with Reserved Font Name D2Coding.

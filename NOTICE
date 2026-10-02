@@ -1,0 +1,12 @@
+md2pdf
+Copyright (c) 2026 Gyu Min Lee
+
+The md2pdf source code is licensed under the MIT License (see LICENSE).
+
+Bundled fonts (embedded into the binary via go:embed) are NOT covered by the
+MIT License. They are distributed under the SIL Open Font License 1.1:
+
+- Pretendard (_fonts/Pretendard-*.ttf): see _fonts/OFL-Pretendard.txt
+  Copyright (c) 2021, Kil Hyung-jin, with Reserved Font Name 'Pretendard'.
+- D2Coding (_fonts/D2Coding-*.ttf): see _fonts/OFL-D2Coding.txt
+  Copyright (c) 2015, NAVER Corporation, with Reserved Font Name D2Coding.
