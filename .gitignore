@@ -2,3 +2,7 @@
 *.syso
 _tmp/
 .env
+
+# Claude Code / loophaus session logs (local only)
+.claude/state/
+.loophaus/
