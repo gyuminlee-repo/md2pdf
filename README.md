@@ -76,7 +76,17 @@ _fonts/            Pretendard-Regular/Bold.ttf, D2Coding-Regular/Bold.ttf (go:em
 test/sample.md     테스트용 한글 마크다운
 ```
 
-변환 중 `<md파일_폴더>/_md2pdf_cache/`에 Mermaid/임베드 이미지가 임시 저장되며, 변환 완료 후 자동 삭제됨.
+변환 중 `<md파일_폴더>/_md2pdf_cache-<임의값>/`에 Mermaid/임베드 이미지가 임시 저장되며, 변환 종료 시 해당 변환이 만든 디렉터리만 삭제됨. 기존 `_md2pdf_cache/` 디렉터리와 다른 변환의 캐시는 보존됨. 입력과 출력이 동일한 파일(심볼릭 링크/하드 링크 포함)을 가리키면 원본 보호를 위해 오류를 반환함.
+
+## 테스트
+
+```bash
+go test ./...
+go test -race ./...  # 지원 플랫폼에서 실행
+go vet ./...
+```
+
+테스트는 합성 Markdown/이미지와 메모리 HTTP 응답만 사용하며 외부 네트워크를 차단함. 실제 Kroki 서비스, Windows WebView2 GUI 및 OLE 드래그앤드롭 동작은 별도 수동 검증이 필요함.
 
 ## 라이선스
 

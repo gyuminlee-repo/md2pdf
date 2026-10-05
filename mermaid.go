@@ -32,21 +32,11 @@ var MermaidModes = []struct {
 	{MermaidSkip, "제거"},
 }
 
-// mermaidCacheDir returns a PDF-accessible cache directory under baseDir.
-func mermaidCacheDir(baseDir string) string {
-	return filepath.Join(baseDir, "_md2pdf_cache")
-}
-
-// cleanupMermaidCache removes the cache directory created during conversion.
-func cleanupMermaidCache(baseDir string) {
-	_ = os.RemoveAll(mermaidCacheDir(baseDir))
-}
-
 // transformMermaidBlocks rewrites ```mermaid fenced code blocks according to
 // the selected mode. For MermaidImage it POSTs each diagram to kroki.io,
-// saves the PNG under baseDir/_md2pdf_cache, and references it by relative
+// saves the PNG in the private conversion cache, and references it by relative
 // path so goldmark-pdf's image FS can find it. Failures degrade to caption.
-func transformMermaidBlocks(mdBytes []byte, mode MermaidMode, baseDir string) []byte {
+func transformMermaidBlocks(mdBytes []byte, mode MermaidMode, cache *conversionCache) []byte {
 	if mode == "" {
 		mode = MermaidImage
 	}
@@ -71,7 +61,7 @@ func transformMermaidBlocks(mdBytes []byte, mode MermaidMode, baseDir string) []
 		}
 		source := strings.Join(lines[start:end], "\n")
 
-		replacement := renderMermaidBlock(source, mode, baseDir)
+		replacement := renderMermaidBlock(source, mode, cache)
 		if replacement != "" {
 			out = append(out, replacement, "")
 		}
@@ -82,7 +72,7 @@ func transformMermaidBlocks(mdBytes []byte, mode MermaidMode, baseDir string) []
 	return []byte(strings.Join(out, "\n"))
 }
 
-func renderMermaidBlock(source string, mode MermaidMode, baseDir string) string {
+func renderMermaidBlock(source string, mode MermaidMode, cache *conversionCache) string {
 	switch mode {
 	case MermaidSkip:
 		return ""
@@ -90,25 +80,24 @@ func renderMermaidBlock(source string, mode MermaidMode, baseDir string) string 
 		return "> _[Mermaid 다이어그램 — 원본 `.md` 참조]_"
 	}
 
-	rel, err := renderMermaidToFile(source, baseDir)
+	rel, err := renderMermaidToFile(source, cache)
 	if err != nil {
 		return fmt.Sprintf("> _[Mermaid 렌더링 실패: %v — 원본 `.md` 참조]_", err)
 	}
 	return "![Mermaid diagram](" + rel + ")"
 }
 
-func renderMermaidToFile(source, baseDir string) (string, error) {
-	cacheDir := mermaidCacheDir(baseDir)
-	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+func renderMermaidToFile(source string, cache *conversionCache) (string, error) {
+	if err := cache.ensure(); err != nil {
 		return "", fmt.Errorf("cache dir: %w", err)
 	}
 
 	sum := sha1.Sum([]byte(source))
 	name := hex.EncodeToString(sum[:]) + ".png"
-	full := filepath.Join(cacheDir, name)
+	full := filepath.Join(cache.dir, name)
 
 	if _, err := os.Stat(full); err == nil {
-		return "_md2pdf_cache/" + name, nil
+		return cache.relative(name), nil
 	}
 
 	client := &http.Client{Timeout: 30 * time.Second}
@@ -129,15 +118,9 @@ func renderMermaidToFile(source, baseDir string) (string, error) {
 		return "", fmt.Errorf("kroki %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 
-	f, err := os.Create(full)
-	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-
-	if _, err := io.Copy(f, resp.Body); err != nil {
+	if err := writeCacheFile(full, resp.Body); err != nil {
 		return "", err
 	}
 
-	return "_md2pdf_cache/" + name, nil
+	return cache.relative(name), nil
 }
