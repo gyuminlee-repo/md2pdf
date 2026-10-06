@@ -1,0 +1,31 @@
+name: Conversion regression tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.12'
+      - name: Offline conversion tests
+        run: go test -count=1 ./...
+      - name: Race detector and vet
+        if: runner.os == 'Linux'
+        run: |
+          go test -race -count=1 ./...
+          go vet ./...
+      - name: Windows GUI build
+        if: runner.os == 'Windows'
+        run: go build -ldflags="-s -w -H windowsgui" -o md2pdf.exe .

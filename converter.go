@@ -30,6 +30,18 @@ type ConvertOptions struct {
 
 // ConvertFile reads a markdown file and writes a PDF to the output path.
 func ConvertFile(inputPath, outputPath string, opts ConvertOptions) error {
+	inputInfo, err := os.Stat(inputPath)
+	if err != nil {
+		return fmt.Errorf("reading input: %w", err)
+	}
+	outputInfo, err := os.Stat(outputPath)
+	if err == nil && os.SameFile(inputInfo, outputInfo) {
+		return fmt.Errorf("input and output refer to the same file")
+	}
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("checking output: %w", err)
+	}
+
 	mdBytes, err := os.ReadFile(inputPath)
 	if err != nil {
 		return fmt.Errorf("reading input: %w", err)
@@ -55,13 +67,14 @@ func ConvertFile(inputPath, outputPath string, opts ConvertOptions) error {
 // Convert takes markdown bytes and returns PDF bytes.
 func Convert(mdBytes []byte, baseDir string, opts ConvertOptions) ([]byte, error) {
 	ctx := context.Background()
+	cache := &conversionCache{baseDir: baseDir}
+	defer cache.cleanup()
 	mdBytes = stripFrontmatter(mdBytes)
-	mdBytes = resolveAttachments(mdBytes, baseDir)
+	mdBytes = resolveAttachments(mdBytes, baseDir, cache)
 	mdBytes = simplifyWikilinks(mdBytes)
 	mdBytes = normalizePlainTextArrows(mdBytes)
 	mdBytes = expandHardLineBreaks(mdBytes)
-	mdBytes = transformMermaidBlocks(mdBytes, opts.Mermaid, baseDir)
-	defer cleanupMermaidCache(baseDir)
+	mdBytes = transformMermaidBlocks(mdBytes, opts.Mermaid, cache)
 
 	// Create PDF with footer (page number)
 	fpdfObj := gpdf.NewFpdf(ctx, gpdf.FpdfConfig{

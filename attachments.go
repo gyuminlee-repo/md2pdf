@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -18,12 +17,12 @@ var imageExts = map[string]bool{
 }
 
 // resolveAttachments rewrites Obsidian-style image embeds `![[name.png]]` into
-// standard markdown `![](_md2pdf_cache/name.png)` by searching the enclosing
-// vault for the file and copying it into the per-document cache directory.
+// standard markdown image links by searching the enclosing
+// vault for the file and copying it into the private conversion cache directory.
 // Also rewrites `![alt](path/with spaces.png)` entries whose target file is
 // missing relative to baseDir, searching the vault for the basename.
 // Non-image wikilinks are left for simplifyWikilinks to handle.
-func resolveAttachments(mdBytes []byte, baseDir string) []byte {
+func resolveAttachments(mdBytes []byte, baseDir string, cache *conversionCache) []byte {
 	vaultRoot := findVaultRoot(baseDir)
 	idx := newAttachmentIndex(vaultRoot, baseDir)
 
@@ -52,7 +51,7 @@ func resolveAttachments(mdBytes []byte, baseDir string) []byte {
 			if !isImageRef(name) {
 				return match // leave non-image embeds for wikilink simplifier
 			}
-			rel, err := idx.materialize(name, baseDir)
+			rel, err := idx.materialize(name, cache)
 			if err != nil {
 				return "_[이미지 없음: " + name + "]_"
 			}
@@ -105,9 +104,9 @@ func findVaultRoot(startDir string) string {
 
 // attachmentIndex lazily indexes image files under the vault root by basename.
 type attachmentIndex struct {
-	vault string
-	base  string
-	once  sync.Once
+	vault  string
+	base   string
+	once   sync.Once
 	byBase map[string][]string
 }
 
@@ -121,7 +120,13 @@ func (a *attachmentIndex) build() {
 		return
 	}
 	_ = filepath.Walk(a.vault, func(path string, info os.FileInfo, err error) error {
-		if err != nil || info.IsDir() {
+		if err != nil {
+			return nil
+		}
+		if info.IsDir() {
+			if info.Name() == "_md2pdf_cache" || strings.HasPrefix(info.Name(), "_md2pdf_cache-") {
+				return filepath.SkipDir
+			}
 			return nil
 		}
 		if !isImageRef(info.Name()) {
@@ -133,12 +138,12 @@ func (a *attachmentIndex) build() {
 	})
 }
 
-// materialize copies the resolved source image into baseDir/_md2pdf_cache/
+// materialize copies the resolved source image into the private cache
 // and returns the forward-slash relative path suitable for markdown.
-func (a *attachmentIndex) materialize(name, baseDir string) (string, error) {
+func (a *attachmentIndex) materialize(name string, cache *conversionCache) (string, error) {
 	// 1. try relative to baseDir first (fastest, matches commonmark semantics)
-	if src := filepath.Join(baseDir, name); fileExists(src) {
-		return copyToCache(src, baseDir)
+	if src := filepath.Join(a.base, name); fileExists(src) {
+		return cache.copyAttachment(src)
 	}
 
 	// 2. fall back to vault-wide basename search
@@ -148,41 +153,10 @@ func (a *attachmentIndex) materialize(name, baseDir string) (string, error) {
 	if len(matches) == 0 {
 		return "", fmt.Errorf("not found: %s", name)
 	}
-	return copyToCache(matches[0], baseDir)
+	return cache.copyAttachment(matches[0])
 }
 
 func fileExists(p string) bool {
 	st, err := os.Stat(p)
 	return err == nil && !st.IsDir()
-}
-
-func copyToCache(src, baseDir string) (string, error) {
-	dir := filepath.Join(baseDir, "_md2pdf_cache")
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return "", err
-	}
-	// preserve extension; sanitize the basename by replacing spaces
-	safe := strings.ReplaceAll(filepath.Base(src), " ", "_")
-	dst := filepath.Join(dir, safe)
-	if !fileExists(dst) {
-		if err := copyFile(src, dst); err != nil {
-			return "", err
-		}
-	}
-	return "_md2pdf_cache/" + safe, nil
-}
-
-func copyFile(src, dst string) error {
-	in, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-	out, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-	_, err = io.Copy(out, in)
-	return err
 }
