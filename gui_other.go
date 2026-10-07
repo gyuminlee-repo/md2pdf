@@ -5,8 +5,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"path/filepath"
-	"strings"
 )
 
 // runGUI on non-Windows platforms falls back to a headless CLI mode.
@@ -14,14 +12,19 @@ import (
 // sibling `.pdf` file.
 func runGUI() {
 	if len(os.Args) > 1 {
-		for _, input := range os.Args[1:] {
-			output := strings.TrimSuffix(input, filepath.Ext(input)) + ".pdf"
-			fmt.Printf("Converting: %s\n", input)
-			if err := ConvertFile(input, output, ConvertOptions{Theme: DefaultTheme}); err != nil {
-				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		results, err := convertBatch(os.Args[1:], "", ConvertOptions{Theme: DefaultTheme}, func(_ int, plan batchOutput) {
+			fmt.Printf("Converting: %s\n", plan.Input)
+		})
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			return
+		}
+		for _, result := range results {
+			if result.Error != "" {
+				fmt.Fprintf(os.Stderr, "Error (%s): %s\n", result.Input, result.Error)
 				continue
 			}
-			fmt.Printf("Done: %s\n", output)
+			fmt.Printf("Done: %s\n", result.Output)
 		}
 		return
 	}
