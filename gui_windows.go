@@ -26,13 +26,13 @@ var (
 	pSHGetPathFromIDList = shell32.NewProc("SHGetPathFromIDListW")
 	pDragQueryFileW      = shell32.NewProc("DragQueryFileW")
 
-	ole32               = syscall.NewLazyDLL("ole32.dll")
-	pCoInitializeEx     = ole32.NewProc("CoInitializeEx")
-	pCoTaskMemFree      = ole32.NewProc("CoTaskMemFree")
-	pOleInitialize      = ole32.NewProc("OleInitialize")
-	pRegisterDragDrop   = ole32.NewProc("RegisterDragDrop")
-	pRevokeDragDrop     = ole32.NewProc("RevokeDragDrop")
-	pReleaseStgMedium   = ole32.NewProc("ReleaseStgMedium")
+	ole32             = syscall.NewLazyDLL("ole32.dll")
+	pCoInitializeEx   = ole32.NewProc("CoInitializeEx")
+	pCoTaskMemFree    = ole32.NewProc("CoTaskMemFree")
+	pOleInitialize    = ole32.NewProc("OleInitialize")
+	pRegisterDragDrop = ole32.NewProc("RegisterDragDrop")
+	pRevokeDragDrop   = ole32.NewProc("RevokeDragDrop")
+	pReleaseStgMedium = ole32.NewProc("ReleaseStgMedium")
 
 	user32Lib         = syscall.NewLazyDLL("user32.dll")
 	pEnumChildWindows = user32Lib.NewProc("EnumChildWindows")
@@ -314,10 +314,6 @@ var (
 func isMarkdownFile(path string) bool {
 	ext := strings.ToLower(filepath.Ext(path))
 	return ext == ".md" || ext == ".markdown" || ext == ".txt"
-}
-
-func toPDFName(name string) string {
-	return strings.TrimSuffix(name, filepath.Ext(name)) + ".pdf"
 }
 
 func addToQueue(path string) bool {
@@ -605,38 +601,42 @@ func handleConvert(paths []string, opts ConvertOptions, w webview2.WebView) map[
 		}
 	}
 
-	ok, fail := 0, 0
-
-	for i, in := range paths {
-		displayName := filepath.Base(in)
-		idx, total, dn := i+1, len(paths), displayName
+	// Snapshot the selected directory once for this whole batch.
+	results, err := convertBatch(paths, outputDir, opts, func(i int, plan batchOutput) {
+		idx, total, dn := i+1, len(paths), filepath.Base(plan.Input)
 		w.Dispatch(func() {
 			w.Eval(fmt.Sprintf(
 				"window._updateProgress(%d, %d, %s)",
 				idx, total, jsonString(dn),
 			))
 		})
-
-		out := toPDFName(in)
-		if outputDir != "" {
-			out = filepath.Join(outputDir, filepath.Base(out))
+	})
+	if err != nil {
+		return map[string]interface{}{
+			"ok": 0, "fail": len(paths),
+			"msg": "출력 경로 확인 실패: " + err.Error(),
 		}
-		if err := ConvertFile(in, out, opts); err != nil {
+	}
+	ok, fail, renamed := 0, 0, 0
+	for _, result := range results {
+		if result.Error != "" {
 			fail++
 		} else {
 			ok++
+			if result.Renamed {
+				renamed++
+			}
 		}
 	}
-
 	msg := fmt.Sprintf("%d개 변환 완료", ok)
-	if fail > 0 {
-		msg += fmt.Sprintf(", %d개 실패", fail)
+	if renamed > 0 {
+		msg += fmt.Sprintf(", %d개 이름 변경 (기존 파일 보존)", renamed)
 	}
-
+	if fail > 0 {
+		msg += fmt.Sprintf(", %d개 실패 (파일별 오류 확인)", fail)
+	}
 	return map[string]interface{}{
-		"ok":   ok,
-		"fail": fail,
-		"msg":  msg,
+		"ok": ok, "fail": fail, "msg": msg, "results": results,
 	}
 }
 
@@ -989,6 +989,7 @@ func buildHTML() string {
   <span class="output-path" id="outputPath">(원본 위치)</span>
   <button class="output-btn" id="outputBtn" onclick="onToggleOutputDir()">변경</button>
 </div>
+<div style="font-size:14px;color:#64748b;margin-bottom:8px;">같은 이름의 PDF가 있으면 (2), (3)…을 붙여 기존 파일을 보존합니다.</div>
 
 <div class="actions">
   <button class="btn btn-secondary" onclick="onBrowse()">파일 추가</button>
@@ -1122,22 +1123,29 @@ func buildHTML() string {
   async function onConvert() {
     if (converting || files.length === 0) return;
     converting = true;
-    updateButtons();
+    renderFiles();
     setStatus('변환 준비 중...', 'progress');
 
     const theme = document.getElementById('themeSelect').value;
     const scale = document.getElementById('scaleSelect').value;
     const mermaid = document.getElementById('mermaidSelect').value;
-    const result = await _convertFiles(files, theme, scale, mermaid);
-    converting = false;
-
-    if (result.fail > 0) {
-      setStatus(result.msg, 'error');
-    } else {
-      setStatus(result.msg, 'success');
-      document.querySelectorAll('.file-status').forEach(el => { el.textContent = '✅'; });
+    try {
+      const result = await _convertFiles(files, theme, scale, mermaid);
+      setStatus(result.msg, result.fail > 0 ? 'error' : 'success');
+      (result.results || []).forEach((item, i) => {
+        const row = $fileList.children[i];
+        if (!row) return;
+        row.querySelector('.file-status').textContent = item.error ? '❌' : '✅';
+        const detail = row.querySelector('.file-path');
+        detail.textContent = item.error ? item.error : '저장: ' + item.output;
+        detail.title = item.error ? item.input + ': ' + item.error : item.output;
+      });
+    } catch (err) {
+      setStatus('변환 오류: ' + (err.message || String(err)), 'error');
+    } finally {
+      converting = false;
+      updateButtons();
     }
-    updateButtons();
   }
 
   async function onClear() {
@@ -1160,6 +1168,7 @@ func buildHTML() string {
   let currentOutputDir = '';
 
   async function onToggleOutputDir() {
+    if (converting) return;
     if (currentOutputDir) {
       await _clearOutputDir();
       currentOutputDir = '';
@@ -1222,6 +1231,7 @@ func buildHTML() string {
   function updateButtons() {
     $btnConvert.disabled = files.length === 0 || converting;
     $btnClear.disabled = files.length === 0 || converting;
+    document.getElementById('outputBtn').disabled = converting;
   }
 
   function setStatus(text, type) {

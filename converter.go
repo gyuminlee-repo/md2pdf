@@ -28,8 +28,13 @@ type ConvertOptions struct {
 	Mermaid   MermaidMode
 }
 
-// ConvertFile reads a markdown file and writes a PDF to the output path.
+// ConvertFile writes to an explicitly chosen output path, replacing a regular
+// file if present. Automatically named GUI/CLI batch outputs use no-replace mode.
 func ConvertFile(inputPath, outputPath string, opts ConvertOptions) error {
+	return convertFile(inputPath, outputPath, opts, true)
+}
+
+func convertFile(inputPath, outputPath string, opts ConvertOptions, replaceExisting bool) error {
 	inputInfo, err := os.Stat(inputPath)
 	if err != nil {
 		return fmt.Errorf("reading input: %w", err)
@@ -57,7 +62,7 @@ func ConvertFile(inputPath, outputPath string, opts ConvertOptions) error {
 		return err
 	}
 
-	if err := os.WriteFile(outputPath, pdfBytes, 0644); err != nil {
+	if err := savePDF(outputPath, pdfBytes, replaceExisting); err != nil {
 		return fmt.Errorf("writing output: %w", err)
 	}
 
