@@ -17,6 +17,12 @@ md2pdf.exe -o output.pdf input.md    # 출력 경로 지정
 md2pdf.exe file1.md file2.md         # 일괄 변환
 ```
 
+**WSL 에서 `powershell.exe` 로 부르면 반환하지 않는다.** 빌드가 `-H windowsgui` 라 콘솔에 붙지 않고, 호출한 셸은 끝나지 않는다(2026-11-10 실측, 600초 초과로 중단). Windows 콘솔에서 직접 부를 때도 같은지는 미확인이다. WSL 세션에서 md 를 PDF 로 뽑아야 하면 md 를 HTML 로 바꾼 뒤 Edge 헤드리스로 인쇄한다.
+
+```
+msedge.exe --headless --disable-gpu --no-pdf-header-footer --print-to-pdf=<out.pdf> file:///<in.html>
+```
+
 ### 인터랙티브
 `md2pdf.exe` 더블클릭 → 파일 경로 입력 → 변환.
 
